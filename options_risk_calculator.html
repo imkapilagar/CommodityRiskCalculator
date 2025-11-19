@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Options Risk Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn-calculate {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: transform 0.2s;
+        }
+
+        .btn-calculate:active {
+            transform: scale(0.98);
+        }
+
+        .results {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9ff;
+            border-radius: 15px;
+            border: 2px solid #667eea;
+        }
+
+        .results h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        .result-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .result-label {
+            color: #666;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .result-value {
+            color: #667eea;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .tranche-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        .tranche-box.pending {
+            background: #e0e0e0;
+            color: #666;
+            border: 2px dashed #999;
+        }
+
+        .tranche-box.pending .tranche-header {
+            color: #666;
+        }
+
+        .tranche-header {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .tranche-lots {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .info-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #856404;
+        }
+
+        .next-tranche-info {
+            background: #d1ecf1;
+            border: 2px solid #0c5460;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+            color: #0c5460;
+            font-weight: 600;
+        }
+
+        .lot-size-info {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Options Risk Calculator</h1>
+        <p class="subtitle">Calculate lot size based on risk per tranche</p>
+
+        <div class="info-box">
+            <strong>📝 How to use:</strong> Fill premiums as you take each trade. Leave others empty.<br>
+            <strong>Formula:</strong> Lots = Available Risk ÷ (Premium × Lot Size × SL%)
+        </div>
+
+        <form id="calculatorForm">
+            <div class="input-group">
+                <label for="instrument">Instrument</label>
+                <select id="instrument" required>
+                    <option value="">Select Instrument</option>
+                    <option value="crude" data-lotsize="100">Crude Oil (100)</option>
+                    <option value="ng" data-lotsize="1250">Natural Gas (1250)</option>
+                    <option value="goldm" data-lotsize="100">Gold M (100)</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+
+            <div class="input-group" id="customLotGroup" style="display: none;">
+                <label for="customLotSize">Custom Lot Size</label>
+                <input type="number" id="customLotSize" placeholder="Enter lot size">
+            </div>
+
+            <div class="input-group">
+                <label for="lotSize">Lot Size</label>
+                <input type="number" id="lotSize" placeholder="Lot size (auto-filled or enter)" required readonly>
+                <div class="lot-size-info">Auto-filled based on instrument selection</div>
+            </div>
+
+            <div class="input-group">
+                <label for="slOption">Stop Loss (%)</label>
+                <select id="slOption" required>
+                    <option value="">Select Stop Loss</option>
+                    <option value="50">50%</option>
+                    <option value="100">100%</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+
+            <div class="input-group" id="customSLGroup" style="display: none;">
+                <label for="customSL">Custom Stop Loss (%)</label>
+                <input type="number" id="customSL" placeholder="Enter custom SL percentage" step="0.01">
+            </div>
+
+            <div class="input-group">
+                <label for="capital">Capital (₹)</label>
+                <input type="number" id="capital" placeholder="Total capital" step="0.01" required>
+            </div>
+
+            <div class="input-group">
+                <label for="totalRiskPercent">Total Risk (% of Capital)</label>
+                <input type="number" id="totalRiskPercent" placeholder="Risk as % of capital (e.g., 5)" step="0.01" required>
+                <div class="lot-size-info" id="calculatedRisk">Calculated risk will be shown here</div>
+            </div>
+
+            <div style="margin-top: 25px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
+                <h3 style="color: #667eea; margin-bottom: 15px; font-size: 16px;">💰 Premium for Each Tranche</h3>
+
+                <div class="input-group">
+                    <label for="premium1">Tranche 1 Premium (₹)</label>
+                    <input type="number" id="premium1" placeholder="Enter when taking Tranche 1" step="0.01">
+                </div>
+
+                <div class="input-group">
+                    <label for="premium2">Tranche 2 Premium (₹)</label>
+                    <input type="number" id="premium2" placeholder="Enter when taking Tranche 2" step="0.01">
+                </div>
+
+                <div class="input-group">
+                    <label for="premium3">Tranche 3 Premium (₹)</label>
+                    <input type="number" id="premium3" placeholder="Enter when taking Tranche 3" step="0.01">
+                </div>
+
+                <div class="input-group">
+                    <label for="premium4">Tranche 4 Premium (₹)</label>
+                    <input type="number" id="premium4" placeholder="Enter when taking Tranche 4" step="0.01">
+                </div>
+            </div>
+
+            <button type="submit" class="btn-calculate">Calculate Lots</button>
+        </form>
+
+        <div id="results" class="results hidden">
+            <h2>📈 Results</h2>
+
+            <div class="result-item">
+                <span class="result-label">Capital</span>
+                <span class="result-value" id="displayCapital">₹0</span>
+            </div>
+
+            <div class="result-item">
+                <span class="result-label">Total Risk (% of Capital)</span>
+                <span class="result-value" id="displayTotalRisk">₹0</span>
+            </div>
+
+            <div class="result-item">
+                <span class="result-label">Stop Loss</span>
+                <span class="result-value" id="displaySL">0%</span>
+            </div>
+
+            <div class="result-item">
+                <span class="result-label">Base Risk per Tranche</span>
+                <span class="result-value" id="baseRiskPerTranche">₹0</span>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <h3 style="color: #667eea; margin-bottom: 15px; text-align: center;">🎯 Tranche-wise Breakdown</h3>
+
+                <div class="tranche-box">
+                    <div class="tranche-header">📍 Tranche 1</div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 13px;">
+                        <span>Premium:</span>
+                        <span id="t1Premium">₹0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px;">
+                        <span>Risk per Lot:</span>
+                        <span id="t1RiskPerLot">₹0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px;">
+                        <span>Available Risk:</span>
+                        <span id="t1Risk">₹0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 14px;">
+                        <span>Lots to Trade:</span>
+                        <span class="tranche-lots" id="t1Lots" style="font-size: 24px;">0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px;">
+                        <span>Utilized:</span>
+                        <span id="t1Utilized">₹0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px; color: #ffd700;">
+                        <span>Leftover:</span>
+                        <span id="t1Leftover">₹0</span>
+                    </div>
+                </div>
+
+                <div class="tranche-box">
+                    <div class="tranche-header">📍 Tranche 2</div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 13px;">
+                        <span>Premium:</span>
+                        <span id="t2Premium">₹0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px;">
+                        <span>Risk per Lot:</span>
+                        <span id="t2RiskPerLot">₹0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px;">
+                        <span>Available Risk:</span>
+                        <span id="t2Risk">₹0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 14px;">
+                        <span>Lots to Trade:</span>
+                        <span class="tranche-lots" id="t2Lots" style="font-size: 24px;">0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px;">
+                        <span>Utilized:</span>
+                        <span id="t2Utilized">₹0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px; color: #ffd700;">
+                        <span>Leftover:</span>
+                        <span id="t2Leftover">₹0</span>
+                    </div>
+                </div>
+
+                <div class="tranche-box">
+                    <div class="tranche-header">📍 Tranche 3</div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 13px;">
+                        <span>Premium:</span>
+                        <span id="t3Premium">₹0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px;">
+                        <span>Risk per Lot:</span>
+                        <span id="t3RiskPerLot">₹0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px;">
+                        <span>Available Risk:</span>
+                        <span id="t3Risk">₹0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 14px;">
+                        <span>Lots to Trade:</span>
+                        <span class="tranche-lots" id="t3Lots" style="font-size: 24px;">0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px;">
+                        <span>Utilized:</span>
+                        <span id="t3Utilized">₹0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px; color: #ffd700;">
+                        <span>Leftover:</span>
+                        <span id="t3Leftover">₹0</span>
+                    </div>
+                </div>
+
+                <div class="tranche-box">
+                    <div class="tranche-header">📍 Tranche 4</div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 13px;">
+                        <span>Premium:</span>
+                        <span id="t4Premium">₹0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px;">
+                        <span>Risk per Lot:</span>
+                        <span id="t4RiskPerLot">₹0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px;">
+                        <span>Available Risk:</span>
+                        <span id="t4Risk">₹0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 14px;">
+                        <span>Lots to Trade:</span>
+                        <span class="tranche-lots" id="t4Lots" style="font-size: 24px;">0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px;">
+                        <span>Utilized:</span>
+                        <span id="t4Utilized">₹0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px; color: #ffd700;">
+                        <span>Final Leftover:</span>
+                        <span id="t4Leftover">₹0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="result-item" style="margin-top: 20px; background: #667eea; color: white;">
+                <span class="result-label" style="color: white;">Total Lots (All 4 Tranches)</span>
+                <span class="result-value" style="color: white;" id="totalLots">0</span>
+            </div>
+
+            <div class="result-item" style="background: #d4edda; border: 2px solid #28a745;">
+                <span class="result-label" style="color: #155724;">Total Risk Utilized</span>
+                <span class="result-value" style="color: #28a745;" id="totalUtilized">₹0</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('calculatorForm');
+        const instrumentSelect = document.getElementById('instrument');
+        const lotSizeInput = document.getElementById('lotSize');
+        const customLotGroup = document.getElementById('customLotGroup');
+        const customLotSize = document.getElementById('customLotSize');
+        const slOption = document.getElementById('slOption');
+        const customSLGroup = document.getElementById('customSLGroup');
+        const customSL = document.getElementById('customSL');
+        const capitalInput = document.getElementById('capital');
+        const totalRiskPercentInput = document.getElementById('totalRiskPercent');
+        const calculatedRiskDiv = document.getElementById('calculatedRisk');
+        const resultsDiv = document.getElementById('results');
+
+        // Handle instrument selection
+        instrumentSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+
+            if (this.value === 'custom') {
+                customLotGroup.style.display = 'block';
+                lotSizeInput.readOnly = false;
+                lotSizeInput.value = '';
+                lotSizeInput.placeholder = 'Enter custom lot size';
+            } else if (this.value) {
+                customLotGroup.style.display = 'none';
+                const lotSize = selectedOption.getAttribute('data-lotsize');
+                lotSizeInput.value = lotSize;
+                lotSizeInput.readOnly = true;
+            } else {
+                customLotGroup.style.display = 'none';
+                lotSizeInput.value = '';
+                lotSizeInput.readOnly = true;
+            }
+        });
+
+        // Handle custom lot size input
+        customLotSize.addEventListener('input', function() {
+            lotSizeInput.value = this.value;
+        });
+
+        // Handle SL option selection
+        slOption.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customSLGroup.style.display = 'block';
+                customSL.required = true;
+            } else {
+                customSLGroup.style.display = 'none';
+                customSL.required = false;
+                customSL.value = '';
+            }
+        });
+
+        // Update calculated risk display
+        function updateCalculatedRisk() {
+            const capital = parseFloat(capitalInput.value);
+            const riskPercent = parseFloat(totalRiskPercentInput.value);
+
+            if (capital && riskPercent) {
+                const totalRisk = (capital * riskPercent) / 100;
+                calculatedRiskDiv.textContent = `Calculated Total Risk: ₹${totalRisk.toFixed(2)}`;
+                calculatedRiskDiv.style.color = '#667eea';
+                calculatedRiskDiv.style.fontWeight = '600';
+            } else {
+                calculatedRiskDiv.textContent = 'Calculated risk will be shown here';
+                calculatedRiskDiv.style.color = '#999';
+                calculatedRiskDiv.style.fontWeight = 'normal';
+            }
+        }
+
+        capitalInput.addEventListener('input', updateCalculatedRisk);
+        totalRiskPercentInput.addEventListener('input', updateCalculatedRisk);
+
+        // Handle form submission
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Get stop loss value
+            const slOptionValue = slOption.value;
+            let stopLoss;
+            if (slOptionValue === 'custom') {
+                stopLoss = parseFloat(customSL.value);
+            } else {
+                stopLoss = parseFloat(slOptionValue);
+            }
+
+            const lotSize = parseFloat(document.getElementById('lotSize').value);
+            const capital = parseFloat(capitalInput.value);
+            const totalRiskPercent = parseFloat(totalRiskPercentInput.value);
+
+            // Calculate total risk from capital and percentage
+            const totalRisk = (capital * totalRiskPercent) / 100;
+
+            // Get premiums for each tranche (can be empty)
+            const premium1 = document.getElementById('premium1').value;
+            const premium2 = document.getElementById('premium2').value;
+            const premium3 = document.getElementById('premium3').value;
+            const premium4 = document.getElementById('premium4').value;
+
+            const premiums = [
+                premium1 ? parseFloat(premium1) : null,
+                premium2 ? parseFloat(premium2) : null,
+                premium3 ? parseFloat(premium3) : null,
+                premium4 ? parseFloat(premium4) : null
+            ];
+
+            // Calculate base risk per tranche
+            const baseRiskPerTranche = totalRisk / 4;
+
+            // Initialize tranche calculations
+            let leftover = 0;
+            let totalLotsTraded = 0;
+            let totalRiskUtilized = 0;
+            let lastCompletedTranche = 0;
+
+            // Calculate for each tranche with cascading leftover
+            const tranches = [1, 2, 3, 4];
+            const trancheData = [];
+
+            tranches.forEach((trancheNum, index) => {
+                // Get premium for this tranche
+                const premium = premiums[index];
+
+                // Available risk = base risk + leftover from previous tranche
+                const availableRisk = baseRiskPerTranche + leftover;
+
+                if (premium !== null && premium > 0) {
+                    // Calculate risk per lot for this tranche
+                    const riskPerLot = premium * lotSize * (stopLoss / 100);
+
+                    // Calculate lots (round down to whole number)
+                    const lots = Math.floor(availableRisk / riskPerLot);
+
+                    // Calculate utilized risk
+                    const utilized = lots * riskPerLot;
+
+                    // Calculate leftover for next tranche
+                    leftover = availableRisk - utilized;
+
+                    // Store data
+                    trancheData.push({
+                        num: trancheNum,
+                        completed: true,
+                        premium: premium,
+                        riskPerLot: riskPerLot,
+                        availableRisk: availableRisk,
+                        lots: lots,
+                        utilized: utilized,
+                        leftover: leftover
+                    });
+
+                    totalLotsTraded += lots;
+                    totalRiskUtilized += utilized;
+                    lastCompletedTranche = trancheNum;
+                } else {
+                    // Tranche not yet taken
+                    trancheData.push({
+                        num: trancheNum,
+                        completed: false,
+                        premium: null,
+                        riskPerLot: null,
+                        availableRisk: availableRisk,
+                        lots: 0,
+                        utilized: 0,
+                        leftover: availableRisk
+                    });
+
+                    // Don't continue to next tranches if this one is incomplete
+                    if (lastCompletedTranche === trancheNum - 1) {
+                        return;
+                    }
+                }
+            });
+
+            // Display base results
+            document.getElementById('displayCapital').textContent = `₹${capital.toFixed(2)}`;
+            document.getElementById('displayTotalRisk').textContent = `₹${totalRisk.toFixed(2)} (${totalRiskPercent}%)`;
+            document.getElementById('displaySL').textContent = `${stopLoss}%`;
+            document.getElementById('baseRiskPerTranche').textContent = `₹${baseRiskPerTranche.toFixed(2)}`;
+
+            // Display tranche-wise results
+            trancheData.forEach((t) => {
+                const trancheBox = document.querySelector(`.tranche-box:nth-of-type(${t.num})`);
+
+                if (t.completed) {
+                    // Completed tranche - show all details
+                    trancheBox.classList.remove('pending');
+                    document.getElementById(`t${t.num}Premium`).textContent = `₹${t.premium.toFixed(2)}`;
+                    document.getElementById(`t${t.num}RiskPerLot`).textContent = `₹${t.riskPerLot.toFixed(2)}`;
+                    document.getElementById(`t${t.num}Risk`).textContent = `₹${t.availableRisk.toFixed(2)}`;
+                    document.getElementById(`t${t.num}Lots`).textContent = t.lots;
+                    document.getElementById(`t${t.num}Utilized`).textContent = `₹${t.utilized.toFixed(2)}`;
+                    document.getElementById(`t${t.num}Leftover`).textContent = `₹${t.leftover.toFixed(2)}`;
+                } else if (t.num === lastCompletedTranche + 1) {
+                    // Next pending tranche - show available risk
+                    trancheBox.classList.add('pending');
+                    document.getElementById(`t${t.num}Premium`).textContent = `--`;
+                    document.getElementById(`t${t.num}RiskPerLot`).textContent = `--`;
+                    document.getElementById(`t${t.num}Risk`).textContent = `₹${t.availableRisk.toFixed(2)}`;
+                    document.getElementById(`t${t.num}Lots`).innerHTML = `<span style="font-size: 16px;">⏳ Pending</span>`;
+                    document.getElementById(`t${t.num}Utilized`).textContent = `--`;
+                    document.getElementById(`t${t.num}Leftover`).textContent = `--`;
+                } else {
+                    // Future tranches - gray out
+                    trancheBox.classList.add('pending');
+                    document.getElementById(`t${t.num}Premium`).textContent = `--`;
+                    document.getElementById(`t${t.num}RiskPerLot`).textContent = `--`;
+                    document.getElementById(`t${t.num}Risk`).textContent = `--`;
+                    document.getElementById(`t${t.num}Lots`).innerHTML = `<span style="font-size: 16px;">⏳ Pending</span>`;
+                    document.getElementById(`t${t.num}Utilized`).textContent = `--`;
+                    document.getElementById(`t${t.num}Leftover`).textContent = `--`;
+                }
+            });
+
+            // Display totals
+            document.getElementById('totalLots').textContent = totalLotsTraded;
+            document.getElementById('totalUtilized').textContent = `₹${totalRiskUtilized.toFixed(2)}`;
+
+            // Show results
+            resultsDiv.classList.remove('hidden');
+
+            // Smooth scroll to results
+            resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+    </script>
+</body>
+</html>
