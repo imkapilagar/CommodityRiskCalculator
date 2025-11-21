@@ -207,9 +207,10 @@
                 <label for="instrument">Instrument</label>
                 <select id="instrument" required>
                     <option value="">Select Instrument</option>
-                    <option value="crude" data-lotsize="100">Crude Oil (100)</option>
+                    <option value="crude" data-lotsize="100" selected>Crude Oil (100)</option>
                     <option value="ng" data-lotsize="1250">Natural Gas (1250)</option>
-                    <option value="goldm" data-lotsize="100">Gold M (100)</option>
+                    <option value="goldm" data-lotsize="10">Gold M (10)</option>
+                    <option value="gold" data-lotsize="100">Gold (100)</option>
                     <option value="custom">Custom</option>
                 </select>
             </div>
@@ -476,6 +477,8 @@
         window.addEventListener('load', function() {
             updateCalculatedRisk();
             loadPremiumValues();
+            // Trigger instrument change to populate lot size for default selection
+            instrumentSelect.dispatchEvent(new Event('change'));
         });
 
         // Handle instrument selection
