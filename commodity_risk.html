@@ -2,59 +2,174 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Commodity Risk Calculator v2.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Commodity Risk Calculator v3.0</title>
     <style>
+        :root {
+            --bg-gradient-1: #667eea;
+            --bg-gradient-2: #764ba2;
+            --container-bg: #ffffff;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --text-muted: #999999;
+            --border-color: #e0e0e0;
+            --input-bg: #ffffff;
+            --results-bg: #f8f9ff;
+            --info-box-bg: #fff3cd;
+            --info-box-border: #ffc107;
+            --info-box-text: #856404;
+            --pending-bg: #e0e0e0;
+            --pending-text: #666666;
+            --success-bg: #d4edda;
+            --success-border: #28a745;
+            --success-text: #155724;
+            --next-tranche-bg: #d1ecf1;
+            --next-tranche-border: #0c5460;
+            --next-tranche-text: #0c5460;
+            --shadow-color: rgba(0,0,0,0.3);
+            --card-shadow: rgba(0,0,0,0.05);
+        }
+
+        .dark-mode {
+            --bg-gradient-1: #1a1a2e;
+            --bg-gradient-2: #16213e;
+            --container-bg: #1e1e2f;
+            --text-primary: #e0e0e0;
+            --text-secondary: #b0b0b0;
+            --text-muted: #707070;
+            --border-color: #3a3a4a;
+            --input-bg: #2a2a3a;
+            --results-bg: #252535;
+            --info-box-bg: #3d3d1a;
+            --info-box-border: #8b8000;
+            --info-box-text: #d4c800;
+            --pending-bg: #2a2a3a;
+            --pending-text: #808080;
+            --success-bg: #1a3d1a;
+            --success-border: #2d7a2d;
+            --success-text: #7dce7d;
+            --next-tranche-bg: #1a3d4d;
+            --next-tranche-border: #3d8a9a;
+            --next-tranche-text: #7dcede;
+            --shadow-color: rgba(0,0,0,0.5);
+            --card-shadow: rgba(0,0,0,0.2);
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-1) 0%, var(--bg-gradient-2) 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 10px;
+            padding-top: 70px;
+            transition: background 0.3s ease;
+        }
+
+        /* Sticky Summary Bar */
+        .sticky-summary {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, var(--bg-gradient-1) 0%, var(--bg-gradient-2) 100%);
+            padding: 12px 15px;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px var(--shadow-color);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .sticky-summary .summary-item {
+            text-align: center;
+            color: white;
+        }
+
+        .sticky-summary .summary-label {
+            font-size: 10px;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sticky-summary .summary-value {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .dark-toggle {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 20px;
+            padding: 8px 12px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dark-toggle:active {
+            transform: scale(0.95);
+            background: rgba(255,255,255,0.3);
         }
 
         .container {
             max-width: 500px;
             margin: 0 auto;
-            background: white;
+            background: var(--container-bg);
             border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 25px 20px;
+            box-shadow: 0 20px 60px var(--shadow-color);
+            transition: background 0.3s ease;
         }
 
         h1 {
-            color: #667eea;
+            color: var(--bg-gradient-1);
             text-align: center;
             margin-bottom: 5px;
-            font-size: 24px;
+            font-size: 22px;
+        }
+
+        .dark-mode h1 {
+            color: #8b9cff;
         }
 
         .version {
             text-align: center;
-            color: #999;
-            font-size: 12px;
-            margin-bottom: 10px;
+            color: var(--text-muted);
+            font-size: 11px;
+            margin-bottom: 8px;
         }
 
         .subtitle {
             text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            font-size: 13px;
         }
 
         .input-group {
-            margin-bottom: 20px;
+            margin-bottom: 18px;
         }
 
         label {
             display: block;
-            color: #333;
+            color: var(--text-primary);
             font-weight: 600;
             margin-bottom: 8px;
             font-size: 14px;
@@ -62,144 +177,425 @@
 
         select, input {
             width: 100%;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
+            padding: 14px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
             font-size: 16px;
             transition: all 0.3s;
+            background: var(--input-bg);
+            color: var(--text-primary);
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            padding-right: 40px;
+        }
+
+        .dark-mode select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
         }
 
         select:focus, input:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: var(--bg-gradient-1);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
         }
 
-        .btn-calculate {
-            width: 100%;
-            padding: 18px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
+        /* Risk Preset Buttons */
+        .preset-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .preset-btn {
+            flex: 1;
+            min-width: 60px;
+            padding: 12px 8px;
+            border: 2px solid var(--bg-gradient-1);
+            background: transparent;
+            color: var(--bg-gradient-1);
             border-radius: 10px;
-            font-size: 18px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            margin-top: 10px;
-            transition: transform 0.2s;
+            transition: all 0.2s;
+            min-height: 44px;
         }
 
-        .btn-calculate:active {
+        .preset-btn:active, .preset-btn.active {
+            background: linear-gradient(135deg, var(--bg-gradient-1) 0%, var(--bg-gradient-2) 100%);
+            color: white;
+            transform: scale(0.97);
+        }
+
+        .dark-mode .preset-btn {
+            border-color: #8b9cff;
+            color: #8b9cff;
+        }
+
+        .dark-mode .preset-btn:active, .dark-mode .preset-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        /* Reset Button */
+        .btn-reset {
+            width: 100%;
+            padding: 14px;
+            background: transparent;
+            color: #dc3545;
+            border: 2px solid #dc3545;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.2s;
+            min-height: 50px;
+        }
+
+        .btn-reset:active {
+            background: #dc3545;
+            color: white;
             transform: scale(0.98);
         }
 
         .results {
-            margin-top: 30px;
-            padding: 25px;
-            background: #f8f9ff;
+            margin-top: 25px;
+            padding: 20px;
+            background: var(--results-bg);
             border-radius: 15px;
-            border: 2px solid #667eea;
+            border: 2px solid var(--bg-gradient-1);
+            transition: background 0.3s ease;
+        }
+
+        .dark-mode .results {
+            border-color: #8b9cff;
         }
 
         .results h2 {
-            color: #667eea;
-            margin-bottom: 20px;
-            font-size: 20px;
+            color: var(--bg-gradient-1);
+            margin-bottom: 15px;
+            font-size: 18px;
             text-align: center;
         }
 
+        .dark-mode .results h2 {
+            color: #8b9cff;
+        }
+
         .result-item {
-            background: white;
-            padding: 15px;
-            margin-bottom: 12px;
+            background: var(--container-bg);
+            padding: 14px;
+            margin-bottom: 10px;
             border-radius: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 8px var(--card-shadow);
         }
 
         .result-label {
-            color: #666;
+            color: var(--text-secondary);
             font-weight: 600;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .result-value {
-            color: #667eea;
+            color: var(--bg-gradient-1);
             font-weight: 700;
-            font-size: 18px;
+            font-size: 16px;
         }
 
+        .dark-mode .result-value {
+            color: #8b9cff;
+        }
+
+        /* Collapsible Tranches */
         .tranche-box {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--bg-gradient-1) 0%, var(--bg-gradient-2) 100%);
             color: white;
-            padding: 20px;
             border-radius: 12px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .tranche-header-row {
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            min-height: 60px;
+        }
+
+        .tranche-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .tranche-title {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .tranche-lots-preview {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .tranche-collapse-icon {
+            font-size: 14px;
+            transition: transform 0.3s;
+        }
+
+        .tranche-box.collapsed .tranche-collapse-icon {
+            transform: rotate(-90deg);
+        }
+
+        .tranche-details {
+            padding: 0 16px 16px;
+            max-height: 300px;
+            transition: all 0.3s ease;
+        }
+
+        .tranche-box.collapsed .tranche-details {
+            max-height: 0;
+            padding-bottom: 0;
+            overflow: hidden;
         }
 
         .tranche-box.pending {
-            background: #e0e0e0;
-            color: #666;
-            border: 2px dashed #999;
+            background: var(--pending-bg);
+            color: var(--pending-text);
+            border: 2px dashed var(--text-muted);
         }
 
-        .tranche-box.pending .tranche-header {
-            color: #666;
+        .tranche-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 13px;
         }
 
-        .tranche-header {
-            font-size: 16px;
+        .tranche-row.lots-row {
+            font-size: 14px;
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .tranche-box.pending .tranche-row.lots-row {
+            border-top-color: rgba(0,0,0,0.1);
+        }
+
+        /* Copyable Lots */
+        .copyable-lots {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+            transition: all 0.2s;
+            min-height: 44px;
+        }
+
+        .copyable-lots:active {
+            background: rgba(255,255,255,0.4);
+            transform: scale(0.97);
+        }
+
+        .tranche-box.pending .copyable-lots {
+            background: rgba(0,0,0,0.1);
+        }
+
+        .copy-icon {
+            font-size: 14px;
+        }
+
+        .copy-feedback {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #28a745;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
             font-weight: 600;
-            margin-bottom: 10px;
+            font-size: 14px;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
         }
 
-        .tranche-lots {
-            font-size: 28px;
-            font-weight: 700;
+        .copy-feedback.show {
+            opacity: 1;
+        }
+
+        .leftover-row {
+            color: #ffd700;
+        }
+
+        .tranche-box.pending .leftover-row {
+            color: var(--text-muted);
         }
 
         .hidden {
-            display: none;
+            display: none !important;
         }
 
         .info-box {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
+            background: var(--info-box-bg);
+            border: 1px solid var(--info-box-border);
             padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 13px;
-            color: #856404;
-        }
-
-        .next-tranche-info {
-            background: #d1ecf1;
-            border: 2px solid #0c5460;
-            padding: 15px;
             border-radius: 10px;
-            margin-top: 10px;
-            color: #0c5460;
-            font-weight: 600;
+            margin-bottom: 18px;
+            font-size: 12px;
+            color: var(--info-box-text);
+            line-height: 1.5;
         }
 
         .lot-size-info {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        .calculated-risk-display {
             font-size: 12px;
-            color: #999;
-            margin-top: 5px;
+            color: var(--bg-gradient-1);
+            margin-top: 6px;
+            font-weight: 600;
+        }
+
+        .dark-mode .calculated-risk-display {
+            color: #8b9cff;
+        }
+
+        .section-divider {
+            margin-top: 22px;
+            padding-top: 18px;
+            border-top: 2px solid var(--border-color);
+        }
+
+        .section-title {
+            color: var(--bg-gradient-1);
+            margin-bottom: 15px;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dark-mode .section-title {
+            color: #8b9cff;
+        }
+
+        /* Total summary at bottom */
+        .total-summary {
+            margin-top: 18px;
+        }
+
+        .total-summary .result-item {
+            background: linear-gradient(135deg, var(--bg-gradient-1) 0%, var(--bg-gradient-2) 100%);
+        }
+
+        .total-summary .result-item .result-label,
+        .total-summary .result-item .result-value {
+            color: white;
+        }
+
+        .utilized-summary .result-item {
+            background: var(--success-bg);
+            border: 2px solid var(--success-border);
+        }
+
+        .utilized-summary .result-item .result-label {
+            color: var(--success-text);
+        }
+
+        .utilized-summary .result-item .result-value {
+            color: var(--success-border);
+        }
+
+        /* Quantity display */
+        .quantity-row {
+            background: rgba(255,255,255,0.15);
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .tranche-box.pending .quantity-row {
+            background: rgba(0,0,0,0.05);
+        }
+
+        .quantity-label {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-bottom: 4px;
+        }
+
+        .quantity-value {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        /* Safe area for iPhone notch */
+        @supports (padding-top: env(safe-area-inset-top)) {
+            .sticky-summary {
+                padding-top: calc(12px + env(safe-area-inset-top));
+            }
+            body {
+                padding-top: calc(70px + env(safe-area-inset-top));
+                padding-bottom: env(safe-area-inset-bottom);
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Sticky Summary Bar -->
+    <div class="sticky-summary">
+        <div class="summary-item">
+            <div class="summary-label">Total Lots</div>
+            <div class="summary-value" id="stickyLots">0</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-label">Risk Used</div>
+            <div class="summary-value" id="stickyRisk">0</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-label">Total Qty</div>
+            <div class="summary-value" id="stickyQty">0</div>
+        </div>
+        <button class="dark-toggle" id="darkToggle" aria-label="Toggle dark mode">
+            <span id="darkIcon">🌙</span>
+        </button>
+    </div>
+
+    <!-- Copy Feedback Toast -->
+    <div class="copy-feedback" id="copyFeedback">Copied!</div>
+
     <div class="container">
-        <h1>📊 Commodity Risk Calculator</h1>
-        <div class="version">Version 2.0</div>
-        <p class="subtitle">Calculate lot size based on risk per tranche</p>
+        <h1>Commodity Risk Calculator</h1>
+        <div class="version">Version 3.0</div>
+        <p class="subtitle">Auto-calculating lot sizes with tranches</p>
 
         <div class="info-box">
-            <strong>📝 How to use:</strong> Fill premiums as you take each trade. Leave others empty.<br>
-            <strong>Formula:</strong> Lots = Available Risk ÷ (Premium × Lot Size × SL%)
+            <strong>How to use:</strong> Fill premiums as you take each trade. Results update automatically.<br>
+            <strong>Tap lot count to copy.</strong>
         </div>
 
         <form id="calculatorForm">
@@ -217,13 +613,13 @@
 
             <div class="input-group" id="customLotGroup" style="display: none;">
                 <label for="customLotSize">Custom Lot Size</label>
-                <input type="number" id="customLotSize" placeholder="Enter lot size">
+                <input type="number" id="customLotSize" placeholder="Enter lot size" inputmode="numeric">
             </div>
 
             <div class="input-group">
                 <label for="lotSize">Lot Size</label>
-                <input type="number" id="lotSize" placeholder="Lot size (auto-filled or enter)" required readonly>
-                <div class="lot-size-info">Auto-filled based on instrument selection</div>
+                <input type="number" id="lotSize" placeholder="Lot size (auto-filled)" required readonly>
+                <div class="lot-size-info">Auto-filled based on instrument</div>
             </div>
 
             <div class="input-group">
@@ -238,201 +634,281 @@
 
             <div class="input-group" id="customSLGroup" style="display: none;">
                 <label for="customSL">Custom Stop Loss (%)</label>
-                <input type="number" id="customSL" placeholder="Enter custom SL percentage" step="0.01">
+                <input type="number" id="customSL" placeholder="Enter custom SL %" step="0.01" inputmode="decimal">
             </div>
 
             <div class="input-group">
                 <label for="capital">Capital (₹)</label>
-                <input type="number" id="capital" placeholder="Total capital" step="0.01" value="12400000" required>
-                <div class="lot-size-info">Default: ₹1,24,00,000 (editable)</div>
+                <input type="number" id="capital" placeholder="Total capital" step="0.01" value="13600000" required inputmode="numeric">
+                <div class="lot-size-info">Default: ₹1,36,00,000</div>
             </div>
 
             <div class="input-group">
-                <label for="totalRiskPercent">Total Risk (% of Capital)</label>
-                <input type="number" id="totalRiskPercent" placeholder="Risk as % of capital" step="0.01" value="0.5" required>
-                <div class="lot-size-info" id="calculatedRisk">Calculated risk will be shown here</div>
+                <label for="totalRiskPercent">Risk % of Capital</label>
+                <input type="number" id="totalRiskPercent" placeholder="Risk %" step="0.01" value="0.5" required inputmode="decimal">
+                <div class="calculated-risk-display" id="calculatedRisk">Total Risk: ₹68,000</div>
+
+                <div class="preset-buttons">
+                    <button type="button" class="preset-btn" data-risk="0.25">0.25%</button>
+                    <button type="button" class="preset-btn active" data-risk="0.5">0.5%</button>
+                    <button type="button" class="preset-btn" data-risk="1">1%</button>
+                    <button type="button" class="preset-btn" data-risk="2">2%</button>
+                </div>
             </div>
 
-            <div style="margin-top: 25px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
-                <h3 style="color: #667eea; margin-bottom: 15px; font-size: 16px;">💰 Premium for Each Tranche</h3>
+            <div class="section-divider">
+                <h3 class="section-title">💰 Premium per Tranche</h3>
 
                 <div class="input-group">
                     <label for="premium1">Tranche 1 Premium (₹)</label>
-                    <input type="number" id="premium1" placeholder="Enter when taking Tranche 1" step="0.01">
+                    <input type="number" id="premium1" placeholder="Enter when taking T1" step="0.01" inputmode="decimal">
                 </div>
 
                 <div class="input-group">
                     <label for="premium2">Tranche 2 Premium (₹)</label>
-                    <input type="number" id="premium2" placeholder="Enter when taking Tranche 2" step="0.01">
+                    <input type="number" id="premium2" placeholder="Enter when taking T2" step="0.01" inputmode="decimal">
                 </div>
 
                 <div class="input-group">
                     <label for="premium3">Tranche 3 Premium (₹)</label>
-                    <input type="number" id="premium3" placeholder="Enter when taking Tranche 3" step="0.01">
+                    <input type="number" id="premium3" placeholder="Enter when taking T3" step="0.01" inputmode="decimal">
                 </div>
 
                 <div class="input-group">
                     <label for="premium4">Tranche 4 Premium (₹)</label>
-                    <input type="number" id="premium4" placeholder="Enter when taking Tranche 4" step="0.01">
+                    <input type="number" id="premium4" placeholder="Enter when taking T4" step="0.01" inputmode="decimal">
                 </div>
-            </div>
 
-            <button type="submit" class="btn-calculate">Calculate Lots</button>
+                <button type="button" class="btn-reset" id="resetPremiums">🗑️ Clear All Premiums</button>
+            </div>
         </form>
 
-        <div id="results" class="results hidden">
+        <div id="results" class="results">
             <h2>📈 Results</h2>
 
             <div class="result-item">
                 <span class="result-label">Capital</span>
-                <span class="result-value" id="displayCapital">₹0</span>
+                <span class="result-value" id="displayCapital">₹1,36,00,000</span>
             </div>
 
             <div class="result-item">
-                <span class="result-label">Total Risk (% of Capital)</span>
-                <span class="result-value" id="displayTotalRisk">₹0</span>
+                <span class="result-label">Total Risk</span>
+                <span class="result-value" id="displayTotalRisk">₹68,000 (0.5%)</span>
             </div>
 
             <div class="result-item">
                 <span class="result-label">Stop Loss</span>
-                <span class="result-value" id="displaySL">0%</span>
+                <span class="result-value" id="displaySL">50%</span>
             </div>
 
             <div class="result-item">
-                <span class="result-label">Base Risk per Tranche</span>
-                <span class="result-value" id="baseRiskPerTranche">₹0</span>
+                <span class="result-label">Risk per Tranche</span>
+                <span class="result-value" id="baseRiskPerTranche">₹17,000</span>
             </div>
 
-            <div style="margin-top: 20px;">
-                <h3 style="color: #667eea; margin-bottom: 15px; text-align: center;">🎯 Tranche-wise Breakdown</h3>
+            <div style="margin-top: 18px;">
+                <h3 class="section-title">🎯 Tranche Breakdown</h3>
 
-                <div class="tranche-box">
-                    <div class="tranche-header">📍 Tranche 1</div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 13px;">
-                        <span>Premium:</span>
-                        <span id="t1Premium">₹0</span>
+                <!-- Tranche 1 -->
+                <div class="tranche-box" id="tranche1Box">
+                    <div class="tranche-header-row" onclick="toggleTranche(1)">
+                        <div class="tranche-header-left">
+                            <span class="tranche-title">T1</span>
+                            <span class="tranche-lots-preview" id="t1LotsPreview">--</span>
+                        </div>
+                        <span class="tranche-collapse-icon">▼</span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px;">
-                        <span>Risk per Lot:</span>
-                        <span id="t1RiskPerLot">₹0</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px;">
-                        <span>Available Risk:</span>
-                        <span id="t1Risk">₹0</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 14px;">
-                        <span>Lots to Trade:</span>
-                        <span class="tranche-lots" id="t1Lots" style="font-size: 24px;">0</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px;">
-                        <span>Utilized:</span>
-                        <span id="t1Utilized">₹0</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px; color: #ffd700;">
-                        <span>Leftover:</span>
-                        <span id="t1Leftover">₹0</span>
+                    <div class="tranche-details">
+                        <div class="tranche-row">
+                            <span>Premium:</span>
+                            <span id="t1Premium">--</span>
+                        </div>
+                        <div class="tranche-row">
+                            <span>Risk/Lot:</span>
+                            <span id="t1RiskPerLot">--</span>
+                        </div>
+                        <div class="tranche-row">
+                            <span>Available:</span>
+                            <span id="t1Risk">₹17,000</span>
+                        </div>
+                        <div class="tranche-row lots-row">
+                            <span>Lots:</span>
+                            <div class="copyable-lots" onclick="copyLots(event, 1)">
+                                <span id="t1Lots">--</span>
+                                <span class="copy-icon">📋</span>
+                            </div>
+                        </div>
+                        <div class="quantity-row">
+                            <div class="quantity-label">Total Quantity (Lots × Lot Size)</div>
+                            <div class="quantity-value" id="t1Qty">--</div>
+                        </div>
+                        <div class="tranche-row">
+                            <span>Utilized:</span>
+                            <span id="t1Utilized">--</span>
+                        </div>
+                        <div class="tranche-row leftover-row">
+                            <span>Leftover:</span>
+                            <span id="t1Leftover">--</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="tranche-box">
-                    <div class="tranche-header">📍 Tranche 2</div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 13px;">
-                        <span>Premium:</span>
-                        <span id="t2Premium">₹0</span>
+                <!-- Tranche 2 -->
+                <div class="tranche-box collapsed" id="tranche2Box">
+                    <div class="tranche-header-row" onclick="toggleTranche(2)">
+                        <div class="tranche-header-left">
+                            <span class="tranche-title">T2</span>
+                            <span class="tranche-lots-preview" id="t2LotsPreview">--</span>
+                        </div>
+                        <span class="tranche-collapse-icon">▼</span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px;">
-                        <span>Risk per Lot:</span>
-                        <span id="t2RiskPerLot">₹0</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px;">
-                        <span>Available Risk:</span>
-                        <span id="t2Risk">₹0</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 14px;">
-                        <span>Lots to Trade:</span>
-                        <span class="tranche-lots" id="t2Lots" style="font-size: 24px;">0</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px;">
-                        <span>Utilized:</span>
-                        <span id="t2Utilized">₹0</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px; color: #ffd700;">
-                        <span>Leftover:</span>
-                        <span id="t2Leftover">₹0</span>
-                    </div>
-                </div>
-
-                <div class="tranche-box">
-                    <div class="tranche-header">📍 Tranche 3</div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 13px;">
-                        <span>Premium:</span>
-                        <span id="t3Premium">₹0</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px;">
-                        <span>Risk per Lot:</span>
-                        <span id="t3RiskPerLot">₹0</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px;">
-                        <span>Available Risk:</span>
-                        <span id="t3Risk">₹0</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 14px;">
-                        <span>Lots to Trade:</span>
-                        <span class="tranche-lots" id="t3Lots" style="font-size: 24px;">0</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px;">
-                        <span>Utilized:</span>
-                        <span id="t3Utilized">₹0</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px; color: #ffd700;">
-                        <span>Leftover:</span>
-                        <span id="t3Leftover">₹0</span>
+                    <div class="tranche-details">
+                        <div class="tranche-row">
+                            <span>Premium:</span>
+                            <span id="t2Premium">--</span>
+                        </div>
+                        <div class="tranche-row">
+                            <span>Risk/Lot:</span>
+                            <span id="t2RiskPerLot">--</span>
+                        </div>
+                        <div class="tranche-row">
+                            <span>Available:</span>
+                            <span id="t2Risk">--</span>
+                        </div>
+                        <div class="tranche-row lots-row">
+                            <span>Lots:</span>
+                            <div class="copyable-lots" onclick="copyLots(event, 2)">
+                                <span id="t2Lots">--</span>
+                                <span class="copy-icon">📋</span>
+                            </div>
+                        </div>
+                        <div class="quantity-row">
+                            <div class="quantity-label">Total Quantity (Lots × Lot Size)</div>
+                            <div class="quantity-value" id="t2Qty">--</div>
+                        </div>
+                        <div class="tranche-row">
+                            <span>Utilized:</span>
+                            <span id="t2Utilized">--</span>
+                        </div>
+                        <div class="tranche-row leftover-row">
+                            <span>Leftover:</span>
+                            <span id="t2Leftover">--</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="tranche-box">
-                    <div class="tranche-header">📍 Tranche 4</div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 13px;">
-                        <span>Premium:</span>
-                        <span id="t4Premium">₹0</span>
+                <!-- Tranche 3 -->
+                <div class="tranche-box collapsed" id="tranche3Box">
+                    <div class="tranche-header-row" onclick="toggleTranche(3)">
+                        <div class="tranche-header-left">
+                            <span class="tranche-title">T3</span>
+                            <span class="tranche-lots-preview" id="t3LotsPreview">--</span>
+                        </div>
+                        <span class="tranche-collapse-icon">▼</span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px;">
-                        <span>Risk per Lot:</span>
-                        <span id="t4RiskPerLot">₹0</span>
+                    <div class="tranche-details">
+                        <div class="tranche-row">
+                            <span>Premium:</span>
+                            <span id="t3Premium">--</span>
+                        </div>
+                        <div class="tranche-row">
+                            <span>Risk/Lot:</span>
+                            <span id="t3RiskPerLot">--</span>
+                        </div>
+                        <div class="tranche-row">
+                            <span>Available:</span>
+                            <span id="t3Risk">--</span>
+                        </div>
+                        <div class="tranche-row lots-row">
+                            <span>Lots:</span>
+                            <div class="copyable-lots" onclick="copyLots(event, 3)">
+                                <span id="t3Lots">--</span>
+                                <span class="copy-icon">📋</span>
+                            </div>
+                        </div>
+                        <div class="quantity-row">
+                            <div class="quantity-label">Total Quantity (Lots × Lot Size)</div>
+                            <div class="quantity-value" id="t3Qty">--</div>
+                        </div>
+                        <div class="tranche-row">
+                            <span>Utilized:</span>
+                            <span id="t3Utilized">--</span>
+                        </div>
+                        <div class="tranche-row leftover-row">
+                            <span>Leftover:</span>
+                            <span id="t3Leftover">--</span>
+                        </div>
                     </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px;">
-                        <span>Available Risk:</span>
-                        <span id="t4Risk">₹0</span>
+                </div>
+
+                <!-- Tranche 4 -->
+                <div class="tranche-box collapsed" id="tranche4Box">
+                    <div class="tranche-header-row" onclick="toggleTranche(4)">
+                        <div class="tranche-header-left">
+                            <span class="tranche-title">T4</span>
+                            <span class="tranche-lots-preview" id="t4LotsPreview">--</span>
+                        </div>
+                        <span class="tranche-collapse-icon">▼</span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 14px;">
-                        <span>Lots to Trade:</span>
-                        <span class="tranche-lots" id="t4Lots" style="font-size: 24px;">0</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px;">
-                        <span>Utilized:</span>
-                        <span id="t4Utilized">₹0</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 13px; color: #ffd700;">
-                        <span>Final Leftover:</span>
-                        <span id="t4Leftover">₹0</span>
+                    <div class="tranche-details">
+                        <div class="tranche-row">
+                            <span>Premium:</span>
+                            <span id="t4Premium">--</span>
+                        </div>
+                        <div class="tranche-row">
+                            <span>Risk/Lot:</span>
+                            <span id="t4RiskPerLot">--</span>
+                        </div>
+                        <div class="tranche-row">
+                            <span>Available:</span>
+                            <span id="t4Risk">--</span>
+                        </div>
+                        <div class="tranche-row lots-row">
+                            <span>Lots:</span>
+                            <div class="copyable-lots" onclick="copyLots(event, 4)">
+                                <span id="t4Lots">--</span>
+                                <span class="copy-icon">📋</span>
+                            </div>
+                        </div>
+                        <div class="quantity-row">
+                            <div class="quantity-label">Total Quantity (Lots × Lot Size)</div>
+                            <div class="quantity-value" id="t4Qty">--</div>
+                        </div>
+                        <div class="tranche-row">
+                            <span>Utilized:</span>
+                            <span id="t4Utilized">--</span>
+                        </div>
+                        <div class="tranche-row leftover-row">
+                            <span>Final Leftover:</span>
+                            <span id="t4Leftover">--</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="result-item" style="margin-top: 20px; background: #667eea; color: white;">
-                <span class="result-label" style="color: white;">Total Lots (All 4 Tranches)</span>
-                <span class="result-value" style="color: white;" id="totalLots">0</span>
+            <div class="total-summary">
+                <div class="result-item">
+                    <span class="result-label">Total Lots</span>
+                    <span class="result-value" id="totalLots">0</span>
+                </div>
             </div>
 
-            <div class="result-item" style="background: #d4edda; border: 2px solid #28a745;">
-                <span class="result-label" style="color: #155724;">Total Risk Utilized</span>
-                <span class="result-value" style="color: #28a745;" id="totalUtilized">₹0</span>
+            <div class="result-item" style="margin-top: 10px;">
+                <span class="result-label">Total Quantity</span>
+                <span class="result-value" id="totalQty">0</span>
+            </div>
+
+            <div class="utilized-summary" style="margin-top: 10px;">
+                <div class="result-item">
+                    <span class="result-label">Total Risk Utilized</span>
+                    <span class="result-value" id="totalUtilized">₹0</span>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        const form = document.getElementById('calculatorForm');
+        // DOM Elements
         const instrumentSelect = document.getElementById('instrument');
         const lotSizeInput = document.getElementById('lotSize');
         const customLotGroup = document.getElementById('customLotGroup');
@@ -443,9 +919,40 @@
         const capitalInput = document.getElementById('capital');
         const totalRiskPercentInput = document.getElementById('totalRiskPercent');
         const calculatedRiskDiv = document.getElementById('calculatedRisk');
-        const resultsDiv = document.getElementById('results');
+        const resetBtn = document.getElementById('resetPremiums');
+        const darkToggle = document.getElementById('darkToggle');
+        const darkIcon = document.getElementById('darkIcon');
+        const copyFeedback = document.getElementById('copyFeedback');
 
-        // Save premium values to localStorage
+        // Stored lot values for copying
+        let lotValues = { 1: 0, 2: 0, 3: 0, 4: 0 };
+
+        // Initialize
+        window.addEventListener('load', function() {
+            loadDarkMode();
+            loadPremiumValues();
+            loadFormState();
+            instrumentSelect.dispatchEvent(new Event('change'));
+            calculate();
+        });
+
+        // Dark Mode
+        function loadDarkMode() {
+            const isDark = localStorage.getItem('commodityRiskDarkMode') === 'true';
+            if (isDark) {
+                document.body.classList.add('dark-mode');
+                darkIcon.textContent = '☀️';
+            }
+        }
+
+        darkToggle.addEventListener('click', function() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            darkIcon.textContent = isDark ? '☀️' : '🌙';
+            localStorage.setItem('commodityRiskDarkMode', isDark);
+        });
+
+        // Save/Load Premium Values
         function savePremiumValues() {
             const premiumData = {
                 premium1: document.getElementById('premium1').value,
@@ -456,7 +963,6 @@
             localStorage.setItem('commodityRiskPremiums', JSON.stringify(premiumData));
         }
 
-        // Load premium values from localStorage
         function loadPremiumValues() {
             const savedData = localStorage.getItem('commodityRiskPremiums');
             if (savedData) {
@@ -468,46 +974,91 @@
             }
         }
 
-        // Add event listeners to save premiums on change
+        // Save/Load Form State
+        function saveFormState() {
+            const formState = {
+                instrument: instrumentSelect.value,
+                customLotSize: customLotSize.value,
+                slOption: slOption.value,
+                customSL: customSL.value,
+                capital: capitalInput.value,
+                riskPercent: totalRiskPercentInput.value
+            };
+            localStorage.setItem('commodityRiskFormState', JSON.stringify(formState));
+        }
+
+        function loadFormState() {
+            const savedState = localStorage.getItem('commodityRiskFormState');
+            if (savedState) {
+                const formState = JSON.parse(savedState);
+                if (formState.instrument) instrumentSelect.value = formState.instrument;
+                if (formState.customLotSize) customLotSize.value = formState.customLotSize;
+                if (formState.slOption) slOption.value = formState.slOption;
+                if (formState.customSL) customSL.value = formState.customSL;
+                if (formState.capital) capitalInput.value = formState.capital;
+                if (formState.riskPercent) totalRiskPercentInput.value = formState.riskPercent;
+
+                // Update preset buttons
+                updatePresetButtons();
+
+                // Handle custom SL visibility
+                if (formState.slOption === 'custom') {
+                    customSLGroup.style.display = 'block';
+                }
+            }
+        }
+
+        // Premium input listeners
         ['premium1', 'premium2', 'premium3', 'premium4'].forEach(function(id) {
-            document.getElementById(id).addEventListener('input', savePremiumValues);
+            document.getElementById(id).addEventListener('input', function() {
+                savePremiumValues();
+                calculate();
+            });
         });
 
-        // Initialize calculated risk on page load and restore premium values
-        window.addEventListener('load', function() {
-            updateCalculatedRisk();
-            loadPremiumValues();
-            // Trigger instrument change to populate lot size for default selection
-            instrumentSelect.dispatchEvent(new Event('change'));
+        // Reset Premiums
+        resetBtn.addEventListener('click', function() {
+            document.getElementById('premium1').value = '';
+            document.getElementById('premium2').value = '';
+            document.getElementById('premium3').value = '';
+            document.getElementById('premium4').value = '';
+            localStorage.removeItem('commodityRiskPremiums');
+            calculate();
+
+            // Visual feedback
+            resetBtn.textContent = '✓ Cleared!';
+            setTimeout(() => {
+                resetBtn.textContent = '🗑️ Clear All Premiums';
+            }, 1000);
         });
 
-        // Handle instrument selection
+        // Instrument selection
         instrumentSelect.addEventListener('change', function() {
             const selectedOption = this.options[this.selectedIndex];
-
             if (this.value === 'custom') {
                 customLotGroup.style.display = 'block';
                 lotSizeInput.readOnly = false;
                 lotSizeInput.value = '';
-                lotSizeInput.placeholder = 'Enter custom lot size';
             } else if (this.value) {
                 customLotGroup.style.display = 'none';
-                const lotSize = selectedOption.getAttribute('data-lotsize');
-                lotSizeInput.value = lotSize;
+                lotSizeInput.value = selectedOption.getAttribute('data-lotsize');
                 lotSizeInput.readOnly = true;
             } else {
                 customLotGroup.style.display = 'none';
                 lotSizeInput.value = '';
                 lotSizeInput.readOnly = true;
             }
+            saveFormState();
+            calculate();
         });
 
-        // Handle custom lot size input
         customLotSize.addEventListener('input', function() {
             lotSizeInput.value = this.value;
+            saveFormState();
+            calculate();
         });
 
-        // Handle SL option selection
+        // SL selection
         slOption.addEventListener('change', function() {
             if (this.value === 'custom') {
                 customSLGroup.style.display = 'block';
@@ -517,179 +1068,220 @@
                 customSL.required = false;
                 customSL.value = '';
             }
+            saveFormState();
+            calculate();
         });
 
-        // Update calculated risk display
-        function updateCalculatedRisk() {
-            const capital = parseFloat(capitalInput.value);
-            const riskPercent = parseFloat(totalRiskPercentInput.value);
+        customSL.addEventListener('input', function() {
+            saveFormState();
+            calculate();
+        });
 
-            if (capital && riskPercent) {
-                const totalRisk = (capital * riskPercent) / 100;
-                calculatedRiskDiv.textContent = `Calculated Total Risk: ₹${totalRisk.toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
-                calculatedRiskDiv.style.color = '#667eea';
-                calculatedRiskDiv.style.fontWeight = '600';
-            } else {
-                calculatedRiskDiv.textContent = 'Calculated risk will be shown here';
-                calculatedRiskDiv.style.color = '#999';
-                calculatedRiskDiv.style.fontWeight = 'normal';
+        // Capital and Risk inputs
+        capitalInput.addEventListener('input', function() {
+            saveFormState();
+            calculate();
+        });
+
+        totalRiskPercentInput.addEventListener('input', function() {
+            updatePresetButtons();
+            saveFormState();
+            calculate();
+        });
+
+        // Preset buttons
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                totalRiskPercentInput.value = this.getAttribute('data-risk');
+                updatePresetButtons();
+                saveFormState();
+                calculate();
+            });
+        });
+
+        function updatePresetButtons() {
+            const currentRisk = totalRiskPercentInput.value;
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-risk') === currentRisk);
+            });
+        }
+
+        // Toggle tranche collapse
+        function toggleTranche(num) {
+            const box = document.getElementById(`tranche${num}Box`);
+            box.classList.toggle('collapsed');
+        }
+
+        // Copy lots
+        function copyLots(event, trancheNum) {
+            event.stopPropagation();
+            const lots = lotValues[trancheNum];
+            if (lots > 0) {
+                navigator.clipboard.writeText(lots.toString()).then(() => {
+                    copyFeedback.textContent = `Copied: ${lots} lots`;
+                    copyFeedback.classList.add('show');
+                    setTimeout(() => {
+                        copyFeedback.classList.remove('show');
+                    }, 1500);
+                }).catch(() => {
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = lots.toString();
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    copyFeedback.textContent = `Copied: ${lots} lots`;
+                    copyFeedback.classList.add('show');
+                    setTimeout(() => {
+                        copyFeedback.classList.remove('show');
+                    }, 1500);
+                });
             }
         }
 
-        capitalInput.addEventListener('input', updateCalculatedRisk);
-        totalRiskPercentInput.addEventListener('input', updateCalculatedRisk);
+        // Format currency
+        function formatCurrency(amount) {
+            return '₹' + amount.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+        }
 
-        // Handle form submission
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-
+        // Main calculation function
+        function calculate() {
             // Get stop loss value
-            const slOptionValue = slOption.value;
-            let stopLoss;
-            if (slOptionValue === 'custom') {
-                stopLoss = parseFloat(customSL.value);
-            } else {
-                stopLoss = parseFloat(slOptionValue);
-            }
+            let stopLoss = slOption.value === 'custom'
+                ? parseFloat(customSL.value) || 50
+                : parseFloat(slOption.value) || 50;
 
-            const lotSize = parseFloat(document.getElementById('lotSize').value);
-            const capital = parseFloat(capitalInput.value);
-            const totalRiskPercent = parseFloat(totalRiskPercentInput.value);
+            const lotSize = parseFloat(lotSizeInput.value) || 0;
+            const capital = parseFloat(capitalInput.value) || 0;
+            const totalRiskPercent = parseFloat(totalRiskPercentInput.value) || 0;
 
-            // Calculate total risk from capital and percentage
+            // Calculate total risk
             const totalRisk = (capital * totalRiskPercent) / 100;
 
-            // Get premiums for each tranche (can be empty)
-            const premium1 = document.getElementById('premium1').value;
-            const premium2 = document.getElementById('premium2').value;
-            const premium3 = document.getElementById('premium3').value;
-            const premium4 = document.getElementById('premium4').value;
+            // Update calculated risk display
+            calculatedRiskDiv.textContent = `Total Risk: ${formatCurrency(totalRisk)}`;
 
+            // Get premiums
             const premiums = [
-                premium1 ? parseFloat(premium1) : null,
-                premium2 ? parseFloat(premium2) : null,
-                premium3 ? parseFloat(premium3) : null,
-                premium4 ? parseFloat(premium4) : null
+                parseFloat(document.getElementById('premium1').value) || null,
+                parseFloat(document.getElementById('premium2').value) || null,
+                parseFloat(document.getElementById('premium3').value) || null,
+                parseFloat(document.getElementById('premium4').value) || null
             ];
 
-            // Calculate base risk per tranche
+            // Base risk per tranche
             const baseRiskPerTranche = totalRisk / 4;
 
-            // Initialize tranche calculations
+            // Calculate tranches
             let leftover = 0;
             let totalLotsTraded = 0;
             let totalRiskUtilized = 0;
+            let totalQuantity = 0;
             let lastCompletedTranche = 0;
-
-            // Calculate for each tranche with cascading leftover
-            const tranches = [1, 2, 3, 4];
             const trancheData = [];
 
-            tranches.forEach((trancheNum, index) => {
-                // Get premium for this tranche
+            [1, 2, 3, 4].forEach((trancheNum, index) => {
                 const premium = premiums[index];
-
-                // Available risk = base risk + leftover from previous tranche
                 const availableRisk = baseRiskPerTranche + leftover;
 
                 if (premium !== null && premium > 0) {
-                    // Calculate risk per lot for this tranche
                     const riskPerLot = premium * lotSize * (stopLoss / 100);
-
-                    // Calculate lots (round down to whole number)
                     const lots = Math.floor(availableRisk / riskPerLot);
-
-                    // Calculate utilized risk
                     const utilized = lots * riskPerLot;
-
-                    // Calculate leftover for next tranche
                     leftover = availableRisk - utilized;
+                    const quantity = lots * lotSize;
 
-                    // Store data
                     trancheData.push({
                         num: trancheNum,
                         completed: true,
-                        premium: premium,
-                        riskPerLot: riskPerLot,
-                        availableRisk: availableRisk,
-                        lots: lots,
-                        utilized: utilized,
-                        leftover: leftover
+                        premium,
+                        riskPerLot,
+                        availableRisk,
+                        lots,
+                        utilized,
+                        leftover,
+                        quantity
                     });
 
                     totalLotsTraded += lots;
                     totalRiskUtilized += utilized;
+                    totalQuantity += quantity;
                     lastCompletedTranche = trancheNum;
+                    lotValues[trancheNum] = lots;
                 } else {
-                    // Tranche not yet taken
                     trancheData.push({
                         num: trancheNum,
                         completed: false,
-                        premium: null,
-                        riskPerLot: null,
-                        availableRisk: availableRisk,
-                        lots: 0,
-                        utilized: 0,
+                        availableRisk,
                         leftover: availableRisk
                     });
-
-                    // Don't continue to next tranches if this one is incomplete
-                    if (lastCompletedTranche === trancheNum - 1) {
-                        return;
-                    }
+                    lotValues[trancheNum] = 0;
                 }
             });
 
-            // Display base results
-            document.getElementById('displayCapital').textContent = `₹${capital.toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
-            document.getElementById('displayTotalRisk').textContent = `₹${totalRisk.toLocaleString('en-IN', {maximumFractionDigits: 2})} (${totalRiskPercent}%)`;
+            // Update display
+            document.getElementById('displayCapital').textContent = formatCurrency(capital);
+            document.getElementById('displayTotalRisk').textContent = `${formatCurrency(totalRisk)} (${totalRiskPercent}%)`;
             document.getElementById('displaySL').textContent = `${stopLoss}%`;
-            document.getElementById('baseRiskPerTranche').textContent = `₹${baseRiskPerTranche.toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
+            document.getElementById('baseRiskPerTranche').textContent = formatCurrency(baseRiskPerTranche);
 
-            // Display tranche-wise results
-            trancheData.forEach((t) => {
-                const trancheBox = document.querySelector(`.tranche-box:nth-of-type(${t.num})`);
+            // Update tranche displays
+            trancheData.forEach(t => {
+                const box = document.getElementById(`tranche${t.num}Box`);
 
                 if (t.completed) {
-                    // Completed tranche - show all details
-                    trancheBox.classList.remove('pending');
+                    box.classList.remove('pending');
                     document.getElementById(`t${t.num}Premium`).textContent = `₹${t.premium.toFixed(2)}`;
-                    document.getElementById(`t${t.num}RiskPerLot`).textContent = `₹${t.riskPerLot.toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
-                    document.getElementById(`t${t.num}Risk`).textContent = `₹${t.availableRisk.toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
+                    document.getElementById(`t${t.num}RiskPerLot`).textContent = formatCurrency(t.riskPerLot);
+                    document.getElementById(`t${t.num}Risk`).textContent = formatCurrency(t.availableRisk);
                     document.getElementById(`t${t.num}Lots`).textContent = t.lots;
-                    document.getElementById(`t${t.num}Utilized`).textContent = `₹${t.utilized.toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
-                    document.getElementById(`t${t.num}Leftover`).textContent = `₹${t.leftover.toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
+                    document.getElementById(`t${t.num}LotsPreview`).textContent = `${t.lots} lots`;
+                    document.getElementById(`t${t.num}Qty`).textContent = t.quantity.toLocaleString('en-IN');
+                    document.getElementById(`t${t.num}Utilized`).textContent = formatCurrency(t.utilized);
+                    document.getElementById(`t${t.num}Leftover`).textContent = formatCurrency(t.leftover);
+
+                    // Collapse completed tranches, expand current
+                    if (t.num < lastCompletedTranche || (lastCompletedTranche === 4)) {
+                        box.classList.add('collapsed');
+                    } else {
+                        box.classList.remove('collapsed');
+                    }
                 } else if (t.num === lastCompletedTranche + 1) {
-                    // Next pending tranche - show available risk
-                    trancheBox.classList.add('pending');
-                    document.getElementById(`t${t.num}Premium`).textContent = `--`;
-                    document.getElementById(`t${t.num}RiskPerLot`).textContent = `--`;
-                    document.getElementById(`t${t.num}Risk`).textContent = `₹${t.availableRisk.toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
-                    document.getElementById(`t${t.num}Lots`).innerHTML = `<span style="font-size: 16px;">⏳ Pending</span>`;
-                    document.getElementById(`t${t.num}Utilized`).textContent = `--`;
-                    document.getElementById(`t${t.num}Leftover`).textContent = `--`;
+                    box.classList.add('pending');
+                    box.classList.remove('collapsed');
+                    document.getElementById(`t${t.num}Premium`).textContent = '--';
+                    document.getElementById(`t${t.num}RiskPerLot`).textContent = '--';
+                    document.getElementById(`t${t.num}Risk`).textContent = formatCurrency(t.availableRisk);
+                    document.getElementById(`t${t.num}Lots`).textContent = '⏳';
+                    document.getElementById(`t${t.num}LotsPreview`).textContent = 'Pending';
+                    document.getElementById(`t${t.num}Qty`).textContent = '--';
+                    document.getElementById(`t${t.num}Utilized`).textContent = '--';
+                    document.getElementById(`t${t.num}Leftover`).textContent = '--';
                 } else {
-                    // Future tranches - gray out
-                    trancheBox.classList.add('pending');
-                    document.getElementById(`t${t.num}Premium`).textContent = `--`;
-                    document.getElementById(`t${t.num}RiskPerLot`).textContent = `--`;
-                    document.getElementById(`t${t.num}Risk`).textContent = `--`;
-                    document.getElementById(`t${t.num}Lots`).innerHTML = `<span style="font-size: 16px;">⏳ Pending</span>`;
-                    document.getElementById(`t${t.num}Utilized`).textContent = `--`;
-                    document.getElementById(`t${t.num}Leftover`).textContent = `--`;
+                    box.classList.add('pending');
+                    box.classList.add('collapsed');
+                    document.getElementById(`t${t.num}Premium`).textContent = '--';
+                    document.getElementById(`t${t.num}RiskPerLot`).textContent = '--';
+                    document.getElementById(`t${t.num}Risk`).textContent = '--';
+                    document.getElementById(`t${t.num}Lots`).textContent = '⏳';
+                    document.getElementById(`t${t.num}LotsPreview`).textContent = 'Pending';
+                    document.getElementById(`t${t.num}Qty`).textContent = '--';
+                    document.getElementById(`t${t.num}Utilized`).textContent = '--';
+                    document.getElementById(`t${t.num}Leftover`).textContent = '--';
                 }
             });
 
-            // Display totals
+            // Update totals
             document.getElementById('totalLots').textContent = totalLotsTraded;
-            document.getElementById('totalUtilized').textContent = `₹${totalRiskUtilized.toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
+            document.getElementById('totalQty').textContent = totalQuantity.toLocaleString('en-IN');
+            document.getElementById('totalUtilized').textContent = formatCurrency(totalRiskUtilized);
 
-            // Show results
-            resultsDiv.classList.remove('hidden');
-
-            // Smooth scroll to results
-            resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        });
+            // Update sticky summary
+            document.getElementById('stickyLots').textContent = totalLotsTraded;
+            document.getElementById('stickyRisk').textContent = formatCurrency(totalRiskUtilized);
+            document.getElementById('stickyQty').textContent = totalQuantity.toLocaleString('en-IN');
+        }
     </script>
 </body>
 </html>
