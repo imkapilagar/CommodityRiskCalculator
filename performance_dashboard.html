@@ -1,0 +1,2998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Dashboard - Strategy P&L Analyzer</title>
+    <!-- Favicon - Gold chart icon on dark blue background -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a1628'/%3E%3Cpath d='M6 24V8' stroke='%23d4af37' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M6 24h20' stroke='%23d4af37' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M10 18l4-6 4 4 6-8' stroke='%23d4af37' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='24' cy='8' r='2' fill='%2348bb78'/%3E%3C/svg%3E">
+    <!-- Apple Touch Icon -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%230a1628'/%3E%3Cpath d='M30 140V40' stroke='%23d4af37' stroke-width='8' stroke-linecap='round'/%3E%3Cpath d='M30 140h120' stroke='%23d4af37' stroke-width='8' stroke-linecap='round'/%3E%3Cpath d='M50 110l25-35 25 25 40-55' stroke='%23d4af37' stroke-width='10' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='140' cy='45' r='12' fill='%2348bb78'/%3E%3C/svg%3E">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Dark Blue & Gold Theme */
+            --bg-primary: #0a1628;
+            --bg-secondary: #0d1f3c;
+            --bg-card: #132744;
+            --bg-card-hover: #1a3456;
+            --text-primary: #f0f4f8;
+            --text-secondary: #a0aec0;
+            --text-muted: #718096;
+
+            /* Gold Accents */
+            --accent-gold: #d4af37;
+            --accent-gold-light: #f0d78c;
+            --accent-gold-dark: #b8962e;
+            --accent-gold-glow: rgba(212, 175, 55, 0.3);
+
+            /* Status Colors */
+            --accent-green: #48bb78;
+            --accent-green-light: #68d391;
+            --accent-red: #fc8181;
+            --accent-red-dark: #e53e3e;
+
+            --border-color: #2d4a6f;
+            --border-light: #3d5a7f;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+            --shadow-gold: 0 0 20px rgba(212, 175, 55, 0.15);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-gold-dark); }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .header-left h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-left h1 svg {
+            color: var(--accent-gold);
+        }
+
+        .header-left p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-dark) 100%);
+            color: var(--bg-primary);
+            box-shadow: var(--shadow-gold);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--accent-gold-light) 0%, var(--accent-gold) 100%);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent-gold);
+        }
+
+        .btn-danger {
+            background: rgba(229, 62, 62, 0.15);
+            color: var(--accent-red);
+            border: 1px solid rgba(229, 62, 62, 0.3);
+        }
+
+        .btn-danger:hover {
+            background: rgba(229, 62, 62, 0.25);
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+
+        /* Upload Section */
+        .upload-section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            border: 2px dashed var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .upload-section.dragover {
+            border-color: var(--accent-gold);
+            background: rgba(212, 175, 55, 0.05);
+            box-shadow: var(--shadow-gold);
+        }
+
+        .upload-section.has-files {
+            border-style: solid;
+            border-color: var(--border-color);
+            padding: 20px;
+        }
+
+        .upload-content {
+            text-align: center;
+        }
+
+        .upload-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 16px;
+            color: var(--accent-gold);
+        }
+
+        .upload-section input[type="file"] {
+            display: none;
+        }
+
+        .upload-text {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 12px;
+        }
+
+        .upload-text span {
+            color: var(--accent-gold);
+            cursor: pointer;
+        }
+
+        .upload-text span:hover {
+            text-decoration: underline;
+        }
+
+        /* Data Source Options */
+        .data-source-options {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .data-source-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 24px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 140px;
+        }
+
+        .data-source-btn:hover {
+            border-color: var(--accent-gold);
+            background: var(--bg-card-hover);
+        }
+
+        .data-source-btn svg {
+            width: 24px;
+            height: 24px;
+            color: var(--accent-gold);
+        }
+
+        .data-source-btn span {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* URL Input Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 22, 40, 0.9);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal h3 {
+            color: var(--accent-gold);
+            margin-bottom: 16px;
+            font-size: 1.2rem;
+        }
+
+        .modal input[type="text"],
+        .modal input[type="url"] {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+        }
+
+        .modal input:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        /* Files List Compact */
+        .files-container {
+            margin-top: 16px;
+        }
+
+        .files-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .files-header h3 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent-gold);
+        }
+
+        .files-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .file-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            font-size: 0.8rem;
+        }
+
+        .file-chip .file-name {
+            color: var(--text-primary);
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .file-chip .file-count {
+            color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+        .file-chip .remove-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 2px;
+            display: flex;
+            align-items: center;
+        }
+
+        .file-chip .remove-btn:hover {
+            color: var(--accent-red);
+        }
+
+        /* Quick Date Presets */
+        .date-presets {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .date-preset {
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .date-preset:hover {
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+        }
+
+        .date-preset.active {
+            background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-dark) 100%);
+            color: var(--bg-primary);
+            border-color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+        /* Strategy Pills */
+        .strategy-pills {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .strategy-pill {
+            padding: 6px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .strategy-pill:hover {
+            border-color: var(--accent-gold);
+        }
+
+        .strategy-pill.active {
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+            border-color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-card-hover) 100%);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--border-color);
+        }
+
+        .stat-card.positive::before {
+            background: linear-gradient(90deg, var(--accent-gold) 0%, var(--accent-green) 100%);
+        }
+        .stat-card.negative::before {
+            background: linear-gradient(90deg, var(--accent-red-dark) 0%, var(--accent-red) 100%);
+        }
+        .stat-card.neutral::before {
+            background: linear-gradient(90deg, var(--accent-gold-dark) 0%, var(--accent-gold) 100%);
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .stat-card.positive .stat-value { color: var(--accent-gold); }
+        .stat-card.negative .stat-value { color: var(--accent-red); }
+
+        /* Sparkline */
+        .sparkline {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 30px;
+            margin-top: 12px;
+        }
+
+        .sparkline-bar {
+            flex: 1;
+            min-width: 4px;
+            border-radius: 2px;
+            transition: height 0.3s ease;
+        }
+
+        .sparkline-bar.up { background: var(--accent-green); }
+        .sparkline-bar.down { background: var(--accent-red); }
+
+        /* Performance Summary Box */
+        .performance-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+            padding: 20px;
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .summary-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .summary-item .label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-item .value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .summary-item .value.positive { color: var(--accent-green); }
+        .summary-item .value.negative { color: var(--accent-red); }
+        .summary-item .value.gold { color: var(--accent-gold); }
+
+        /* Charts Container */
+        .charts-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .chart-container {
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .chart-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-gold);
+        }
+
+        .chart-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Equity Curve Chart */
+        .equity-chart-wrapper {
+            position: relative;
+            height: 200px;
+            overflow: hidden;
+        }
+
+        .equity-chart {
+            display: flex;
+            align-items: flex-end;
+            height: 100%;
+            gap: 1px;
+            padding: 0;
+        }
+
+        .chart-bar {
+            flex: 1;
+            min-width: 2px;
+            max-width: 8px;
+            border-radius: 2px 2px 0 0;
+            transition: opacity 0.2s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .chart-bar:hover {
+            opacity: 0.8;
+        }
+
+        .chart-bar.positive {
+            background: linear-gradient(180deg, var(--accent-gold) 0%, var(--accent-green) 100%);
+        }
+        .chart-bar.negative {
+            background: linear-gradient(180deg, var(--accent-red) 0%, var(--accent-red-dark) 100%);
+        }
+
+        /* Peak Line */
+        .peak-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent-gold);
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .peak-label {
+            position: absolute;
+            right: 10px;
+            font-size: 0.7rem;
+            color: var(--accent-gold);
+            background: var(--bg-card);
+            padding: 2px 8px;
+            border-radius: 4px;
+            transform: translateY(-50%);
+        }
+
+        /* Drawdown Chart */
+        .drawdown-chart-wrapper {
+            position: relative;
+            height: 100px;
+        }
+
+        .drawdown-chart {
+            display: flex;
+            align-items: flex-start;
+            height: 100%;
+            gap: 1px;
+        }
+
+        .dd-bar {
+            flex: 1;
+            min-width: 2px;
+            max-width: 8px;
+            background: linear-gradient(180deg, var(--accent-red) 0%, rgba(229, 62, 62, 0.3) 100%);
+            border-radius: 0 0 2px 2px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .dd-bar:hover {
+            opacity: 0.7;
+        }
+
+        /* Chart Tooltip */
+        .chart-tooltip {
+            position: fixed;
+            background: var(--bg-primary);
+            border: 1px solid var(--accent-gold);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 0.8rem;
+            z-index: 100;
+            pointer-events: none;
+            display: none;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .chart-tooltip.active {
+            display: block;
+        }
+
+        .chart-tooltip .tooltip-date {
+            color: var(--accent-gold);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .chart-tooltip .tooltip-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 4px;
+        }
+
+        .chart-tooltip .tooltip-label {
+            color: var(--text-muted);
+        }
+
+        .chart-tooltip .tooltip-value {
+            font-weight: 600;
+        }
+
+        /* Monthly Heatmap */
+        .monthly-heatmap {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .heatmap-cell {
+            padding: 12px 8px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .heatmap-cell:hover {
+            transform: scale(1.05);
+        }
+
+        .heatmap-cell.profit {
+            background: linear-gradient(135deg, rgba(72, 187, 120, 0.3) 0%, rgba(72, 187, 120, 0.1) 100%);
+            border: 1px solid rgba(72, 187, 120, 0.3);
+        }
+
+        .heatmap-cell.loss {
+            background: linear-gradient(135deg, rgba(252, 129, 129, 0.3) 0%, rgba(252, 129, 129, 0.1) 100%);
+            border: 1px solid rgba(252, 129, 129, 0.3);
+        }
+
+        .heatmap-cell .month-name {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .heatmap-cell .month-value {
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .heatmap-cell.profit .month-value { color: var(--accent-green); }
+        .heatmap-cell.loss .month-value { color: var(--accent-red); }
+
+        /* Day of Week Analysis */
+        .dow-analysis {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .dow-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s;
+        }
+
+        .dow-card:hover {
+            border-color: var(--accent-gold);
+            transform: translateY(-2px);
+        }
+
+        .dow-card .day-name {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .dow-card .day-pnl {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .dow-card .day-pnl.positive { color: var(--accent-green); }
+        .dow-card .day-pnl.negative { color: var(--accent-red); }
+
+        .dow-card .day-stats {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .dow-card .day-winrate {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .dow-card .day-winrate.good {
+            background: rgba(72, 187, 120, 0.2);
+            color: var(--accent-green);
+        }
+
+        .dow-card .day-winrate.bad {
+            background: rgba(252, 129, 129, 0.2);
+            color: var(--accent-red);
+        }
+
+        /* Strategy Comparison Table */
+        .strategy-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        .strategy-table th {
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+        }
+
+        .strategy-table th:not(:first-child) {
+            text-align: right;
+        }
+
+        .strategy-table td {
+            padding: 12px 16px;
+            font-size: 0.85rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .strategy-table td:not(:first-child) {
+            text-align: right;
+        }
+
+        .strategy-table tr:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .strategy-table .strategy-name {
+            font-weight: 600;
+            color: var(--accent-gold);
+        }
+
+        .strategy-table .positive { color: var(--accent-green); }
+        .strategy-table .negative { color: var(--accent-red); }
+
+        .strategy-table .grade {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .strategy-table .grade-a { background: rgba(72, 187, 120, 0.2); color: var(--accent-green); }
+        .strategy-table .grade-b { background: rgba(212, 175, 55, 0.2); color: var(--accent-gold); }
+        .strategy-table .grade-c { background: rgba(252, 129, 129, 0.2); color: var(--accent-red); }
+
+        /* Two column layout for charts */
+        .charts-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 16px;
+        }
+
+        @media (max-width: 900px) {
+            .charts-row {
+                grid-template-columns: 1fr;
+            }
+            .dow-analysis {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 500px) {
+            .dow-analysis {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Win/Loss Streak Visualization */
+        .streak-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 16px;
+        }
+
+        .streak-box {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .streak-box:hover {
+            transform: scale(1.2);
+            z-index: 10;
+        }
+
+        .streak-box.win {
+            background: var(--accent-green);
+            color: white;
+        }
+
+        .streak-box.loss {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        .streak-box.neutral {
+            background: var(--border-color);
+            color: var(--text-muted);
+        }
+
+        .streak-summary {
+            display: flex;
+            gap: 24px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .streak-stat {
+            text-align: center;
+        }
+
+        .streak-stat .label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .streak-stat .value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
+        .streak-stat .value.green { color: var(--accent-green); }
+        .streak-stat .value.red { color: var(--accent-red); }
+        .streak-stat .value.gold { color: var(--accent-gold); }
+
+        /* P&L Distribution Histogram */
+        .histogram-container {
+            position: relative;
+            height: 150px;
+            margin-top: 16px;
+        }
+
+        .histogram-bars {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            height: 120px;
+            gap: 2px;
+        }
+
+        .histogram-bar {
+            min-width: 20px;
+            max-width: 40px;
+            border-radius: 4px 4px 0 0;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            position: relative;
+        }
+
+        .histogram-bar:hover {
+            opacity: 0.8;
+        }
+
+        .histogram-bar.negative {
+            background: linear-gradient(180deg, var(--accent-red) 0%, var(--accent-red-dark) 100%);
+        }
+
+        .histogram-bar.positive {
+            background: linear-gradient(180deg, var(--accent-green) 0%, var(--accent-green-light) 100%);
+        }
+
+        .histogram-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .histogram-stats {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Time Analysis */
+        .time-analysis {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .time-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .time-card .time-label {
+            font-size: 0.8rem;
+            color: var(--accent-gold);
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .time-card .time-pnl {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .time-card .time-pnl.positive { color: var(--accent-green); }
+        .time-card .time-pnl.negative { color: var(--accent-red); }
+
+        .time-card .time-stats {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .time-card .time-stats span {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .time-card .time-stats .stat-val {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Period Comparison */
+        .period-compare-header {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .period-select {
+            padding: 8px 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .period-select:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .compare-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .compare-card .metric-name {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .compare-values {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .compare-period {
+            text-align: center;
+            flex: 1;
+        }
+
+        .compare-period .period-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .compare-period .period-value {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .compare-period .period-value.positive { color: var(--accent-green); }
+        .compare-period .period-value.negative { color: var(--accent-red); }
+        .compare-period .period-value.gold { color: var(--accent-gold); }
+
+        .compare-change {
+            text-align: center;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .compare-change.better {
+            background: rgba(72, 187, 120, 0.2);
+            color: var(--accent-green);
+        }
+
+        .compare-change.worse {
+            background: rgba(252, 129, 129, 0.2);
+            color: var(--accent-red);
+        }
+
+        .vs-divider {
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            align-self: center;
+        }
+
+        /* Storage Info */
+        .storage-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: rgba(212, 175, 55, 0.1);
+            border-radius: 6px;
+            font-size: 0.75rem;
+            color: var(--accent-gold);
+        }
+
+        .storage-info svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            color: var(--accent-gold);
+            opacity: 0.3;
+        }
+
+        .empty-state h3 {
+            font-size: 1rem;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        /* Animated Counter */
+        @keyframes countUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stat-value.animated {
+            animation: countUp 0.5s ease-out;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 16px; }
+            .header { flex-direction: column; gap: 16px; text-align: center; }
+            .header-right { width: 100%; justify-content: center; flex-wrap: wrap; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .data-source-options { flex-direction: column; align-items: stretch; }
+            .data-source-btn { flex-direction: row; justify-content: center; }
+            .date-presets { justify-content: center; }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .performance-summary { grid-template-columns: 1fr 1fr; }
+        }
+
+        /* Filters section - simplified */
+        .filters-row {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .filter-group label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .filter-group select {
+            padding: 8px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .filter-group select:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+        }
+
+        /* Hide sections initially */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 3v18h18"/>
+                        <path d="M18 17V9"/>
+                        <path d="M13 17V5"/>
+                        <path d="M8 17v-3"/>
+                    </svg>
+                    Performance Dashboard
+                </h1>
+                <p>Strategy P&L Analyzer</p>
+            </div>
+            <div class="header-right">
+                <div class="storage-info" id="storageInfo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+                        <polyline points="17 21 17 13 7 13 7 21"/>
+                    </svg>
+                    <span id="storageStatus">No data loaded</span>
+                </div>
+                <button class="btn btn-secondary" onclick="exportData()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    Export
+                </button>
+            </div>
+        </header>
+
+        <!-- Upload Section -->
+        <div class="upload-section" id="uploadSection">
+            <div class="upload-content" id="uploadContent">
+                <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" multiple>
+                <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                </svg>
+                <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    Upload Excel/CSV
+                </button>
+                <p class="upload-text">Drag & drop files or <span onclick="document.getElementById('fileInput').click()">browse</span></p>
+
+                <div class="data-source-options">
+                    <div class="data-source-btn" onclick="showUrlModal()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                        </svg>
+                        <span>Import from URL</span>
+                    </div>
+                    <div class="data-source-btn" onclick="showGoogleSheetsModal()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="3" y1="9" x2="21" y2="9"/>
+                            <line x1="3" y1="15" x2="21" y2="15"/>
+                            <line x1="9" y1="3" x2="9" y2="21"/>
+                            <line x1="15" y1="3" x2="15" y2="21"/>
+                        </svg>
+                        <span>Google Sheets</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="files-container hidden" id="filesContainer">
+                <div class="files-header">
+                    <h3>Loaded Data Sources</h3>
+                    <button class="btn btn-danger btn-sm" onclick="clearAllData()">Clear All</button>
+                </div>
+                <div class="files-list" id="filesList"></div>
+            </div>
+        </div>
+
+        <!-- URL Import Modal -->
+        <div class="modal-overlay" id="urlModal">
+            <div class="modal">
+                <h3>Import from URL</h3>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">
+                    Enter a direct link to a CSV or Excel file
+                </p>
+                <input type="url" id="importUrl" placeholder="https://example.com/data.csv">
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="hideUrlModal()">Cancel</button>
+                    <button class="btn btn-primary" onclick="importFromUrl()">Import</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Google Sheets Modal -->
+        <div class="modal-overlay" id="sheetsModal">
+            <div class="modal">
+                <h3>Connect Google Sheets</h3>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">
+                    1. Open your Google Sheet<br>
+                    2. File → Share → Publish to web<br>
+                    3. Select CSV format and copy the link
+                </p>
+                <input type="url" id="sheetsUrl" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv">
+                <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; cursor: pointer;">
+                    <input type="checkbox" id="autoRefresh" style="accent-color: var(--accent-gold);">
+                    <span style="font-size: 0.85rem; color: var(--text-secondary);">Auto-refresh on page load</span>
+                </label>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="hideSheetsModal()">Cancel</button>
+                    <button class="btn btn-primary" onclick="connectGoogleSheets()">Connect</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Date Presets -->
+        <div class="date-presets hidden" id="datePresets">
+            <button class="date-preset" data-days="7">Last 7 Days</button>
+            <button class="date-preset" data-days="30">Last 30 Days</button>
+            <button class="date-preset" data-days="90">Last 90 Days</button>
+            <button class="date-preset" data-preset="mtd">MTD</button>
+            <button class="date-preset" data-preset="ytd">YTD</button>
+            <button class="date-preset active" data-preset="all">All Time</button>
+        </div>
+
+        <!-- Strategy Pills -->
+        <div class="strategy-pills hidden" id="strategyPills">
+            <span class="strategy-pill active" data-strategy="all">All Strategies</span>
+        </div>
+
+        <!-- Filters Row -->
+        <div class="filters-row hidden" id="filtersRow">
+            <div class="filter-group">
+                <label>Index</label>
+                <select id="indexSelect">
+                    <option value="all">All Indices</option>
+                    <option value="Nifty">Nifty</option>
+                    <option value="BankNifty">Bank Nifty</option>
+                    <option value="Sensex">Sensex</option>
+                    <option value="Finnifty">Finnifty</option>
+                    <option value="MidcapNifty">Midcap Nifty</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid hidden" id="statsGrid">
+            <div class="stat-card neutral">
+                <div class="stat-label">Total Trades</div>
+                <div class="stat-value" id="statTotalTrades">-</div>
+                <div class="sparkline" id="sparklineTrades"></div>
+            </div>
+            <div class="stat-card" id="statPLCard">
+                <div class="stat-label">Total P&L</div>
+                <div class="stat-value" id="statTotalPL">-</div>
+                <div class="sparkline" id="sparklinePL"></div>
+            </div>
+            <div class="stat-card" id="statWinRateCard">
+                <div class="stat-label">Win Rate</div>
+                <div class="stat-value" id="statWinRate">-</div>
+            </div>
+            <div class="stat-card neutral">
+                <div class="stat-label">Avg P&L</div>
+                <div class="stat-value" id="statAvgPL">-</div>
+            </div>
+            <div class="stat-card negative">
+                <div class="stat-label">Max Drawdown</div>
+                <div class="stat-value" id="statMaxDD">-</div>
+            </div>
+            <div class="stat-card neutral">
+                <div class="stat-label">Profit Factor</div>
+                <div class="stat-value" id="statProfitFactor">-</div>
+            </div>
+            <div class="stat-card neutral">
+                <div class="stat-label">Calmar Ratio</div>
+                <div class="stat-value" id="statCalmar">-</div>
+            </div>
+        </div>
+
+        <!-- Performance Summary -->
+        <div class="performance-summary hidden" id="performanceSummary">
+            <div class="summary-item">
+                <span class="label">Best Day</span>
+                <span class="value positive" id="bestDay">-</span>
+            </div>
+            <div class="summary-item">
+                <span class="label">Worst Day</span>
+                <span class="value negative" id="worstDay">-</span>
+            </div>
+            <div class="summary-item">
+                <span class="label">Current Streak</span>
+                <span class="value gold" id="currentStreak">-</span>
+            </div>
+            <div class="summary-item">
+                <span class="label">Days Since Peak</span>
+                <span class="value" id="daysSincePeak">-</span>
+            </div>
+            <div class="summary-item">
+                <span class="label">30D Rolling Win%</span>
+                <span class="value gold" id="rollingWinRate">-</span>
+            </div>
+            <div class="summary-item">
+                <span class="label">30D Rolling Avg</span>
+                <span class="value" id="rollingAvgPL">-</span>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-wrapper hidden" id="chartsWrapper">
+            <!-- Equity Curve -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <div>
+                        <h3 class="chart-title">Equity Curve</h3>
+                        <p class="chart-subtitle" id="equitySummary">Cumulative P&L over time</p>
+                    </div>
+                    <div id="chartSummary" style="font-size: 0.9rem; font-weight: 600;"></div>
+                </div>
+                <div class="equity-chart-wrapper">
+                    <div class="equity-chart" id="equityChart"></div>
+                    <div class="peak-line" id="peakLine" style="display: none;"></div>
+                    <span class="peak-label" id="peakLabel"></span>
+                </div>
+            </div>
+
+            <!-- Drawdown -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <div>
+                        <h3 class="chart-title">Drawdown</h3>
+                        <p class="chart-subtitle" id="drawdownSummary">Maximum drawdown from peak</p>
+                    </div>
+                </div>
+                <div class="drawdown-chart-wrapper">
+                    <div class="drawdown-chart" id="drawdownChart"></div>
+                </div>
+            </div>
+
+            <!-- Two Column Row -->
+            <div class="charts-row">
+                <!-- Monthly Heatmap -->
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div>
+                            <h3 class="chart-title">Monthly Performance</h3>
+                            <p class="chart-subtitle">P&L by month</p>
+                        </div>
+                    </div>
+                    <div class="monthly-heatmap" id="monthlyHeatmap"></div>
+                </div>
+
+                <!-- Day of Week Analysis -->
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div>
+                            <h3 class="chart-title">Day of Week Analysis</h3>
+                            <p class="chart-subtitle">Performance by weekday</p>
+                        </div>
+                    </div>
+                    <div class="dow-analysis" id="dowAnalysis"></div>
+                </div>
+            </div>
+
+            <!-- Win/Loss Streak and P&L Distribution Row -->
+            <div class="charts-row">
+                <!-- Win/Loss Streak -->
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div>
+                            <h3 class="chart-title">Win/Loss Streak</h3>
+                            <p class="chart-subtitle">Last 50 trades outcome</p>
+                        </div>
+                    </div>
+                    <div class="streak-container" id="streakContainer"></div>
+                    <div class="streak-summary" id="streakSummary"></div>
+                </div>
+
+                <!-- P&L Distribution -->
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div>
+                            <h3 class="chart-title">P&L Distribution</h3>
+                            <p class="chart-subtitle">Trade outcome histogram</p>
+                        </div>
+                    </div>
+                    <div class="histogram-container">
+                        <div class="histogram-bars" id="histogramBars"></div>
+                        <div class="histogram-labels" id="histogramLabels"></div>
+                    </div>
+                    <div class="histogram-stats" id="histogramStats"></div>
+                </div>
+            </div>
+
+            <!-- Time Analysis -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <div>
+                        <h3 class="chart-title">Time-Based Performance</h3>
+                        <p class="chart-subtitle">Intraday trades: Before 10:30 AM vs After 10:30 AM</p>
+                    </div>
+                </div>
+                <div class="time-analysis" id="timeAnalysis"></div>
+            </div>
+
+            <!-- Period Comparison -->
+            <div class="chart-container">
+                <div class="chart-header period-compare-header">
+                    <div>
+                        <h3 class="chart-title">Period Comparison</h3>
+                        <p class="chart-subtitle">Compare performance across time periods</p>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center; margin-left: auto;">
+                        <select class="period-select" id="period1Select">
+                            <option value="this_month">This Month</option>
+                            <option value="last_month">Last Month</option>
+                            <option value="this_week">This Week</option>
+                            <option value="last_week">Last Week</option>
+                            <option value="last_30">Last 30 Days</option>
+                            <option value="last_90">Last 90 Days</option>
+                        </select>
+                        <span style="color: var(--text-muted);">vs</span>
+                        <select class="period-select" id="period2Select">
+                            <option value="last_month">Last Month</option>
+                            <option value="this_month">This Month</option>
+                            <option value="last_week">Last Week</option>
+                            <option value="this_week">This Week</option>
+                            <option value="last_30">Last 30 Days</option>
+                            <option value="last_90">Last 90 Days</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="comparison-grid" id="comparisonGrid"></div>
+            </div>
+
+            <!-- Strategy Comparison -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <div>
+                        <h3 class="chart-title">Strategy Performance</h3>
+                        <p class="chart-subtitle">Comparison across all strategies</p>
+                    </div>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="strategy-table" id="strategyTable">
+                        <thead>
+                            <tr>
+                                <th>Strategy</th>
+                                <th>Trades</th>
+                                <th>Win Rate</th>
+                                <th>Total P&L</th>
+                                <th>Avg P&L</th>
+                                <th>Max DD</th>
+                                <th>PF</th>
+                                <th>Grade</th>
+                            </tr>
+                        </thead>
+                        <tbody id="strategyTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tooltip -->
+        <div class="chart-tooltip" id="chartTooltip">
+            <div class="tooltip-date"></div>
+            <div class="tooltip-content"></div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let loadedFiles = {};
+        let googleSheetUrl = null;
+        let rawData = [];
+        let processedData = [];
+        let filteredData = [];
+        let currentDatePreset = 'all';
+        let currentStrategy = 'all';
+
+        // Configuration
+        const CONFIG = {
+            LOT_SIZES: { 'Nifty': 75, 'BankNifty': 15, 'Sensex': 10, 'Finnifty': 25, 'MidcapNifty': 50 },
+            MARGINS: { 'Single-Leg': 96000, 'Multi-Leg': 164000 },
+            SINGLE_LEG_STRATEGIES: ['BID', 'IntraIV', 'PTS-IV', 'PTS-PCR'],
+            MULTI_LEG_STRATEGIES: ['RSE', 'RSE CP', 'RSI Trend', 'TrendSelector', 'All Overnight-Hedge', 'OptionCrack', 'CTS', 'Sniper', 'Sixth Sense', 'PTS-ATR'],
+            STRATEGY_GROUPS: {
+                'BID': ['BID'], 'CTS': ['CTS'], 'Sniper': ['Sniper', 'SNIPER', 'sniper'],
+                'RSE CP': ['RSE CP'], 'RSE': ['RSE'], 'TrendSelector': ['TrendSelector'],
+                'IntraIV': ['IntraIV'], 'OptionCrack': ['OptionCrack'], 'PTS-IV': ['PTS-IV'],
+                'PTS-PCR': ['PTS-PCR'], 'PTS-ATR': ['PTS-ATR'], 'PTS-Other': ['PTS'],
+                'RSI Trend': ['RSI Trend', 'RSITrend', 'RSI TREND', 'RSiTrend'],
+                'Sixth Sense': ['Sixth Sense'], 'All Overnight-Hedge': ['All Overnight', 'Overnight']
+            }
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFromStorage();
+            setupDragDrop();
+            setupEventListeners();
+            checkAutoRefresh();
+        });
+
+        function setupEventListeners() {
+            // Date presets
+            document.querySelectorAll('.date-preset').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.date-preset').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentDatePreset = btn.dataset.preset || btn.dataset.days;
+                    applyFilters();
+                });
+            });
+
+            // Index filter
+            document.getElementById('indexSelect').addEventListener('change', applyFilters);
+
+            // Period comparison dropdowns
+            document.getElementById('period1Select').addEventListener('change', updatePeriodComparison);
+            document.getElementById('period2Select').addEventListener('change', updatePeriodComparison);
+        }
+
+        function setupDragDrop() {
+            const uploadSection = document.getElementById('uploadSection');
+            const fileInput = document.getElementById('fileInput');
+
+            uploadSection.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadSection.classList.add('dragover');
+            });
+
+            uploadSection.addEventListener('dragleave', () => {
+                uploadSection.classList.remove('dragover');
+            });
+
+            uploadSection.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadSection.classList.remove('dragover');
+                handleFiles(e.dataTransfer.files);
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+            });
+        }
+
+        // Modal functions
+        function showUrlModal() {
+            document.getElementById('urlModal').classList.add('active');
+        }
+
+        function hideUrlModal() {
+            document.getElementById('urlModal').classList.remove('active');
+        }
+
+        function showGoogleSheetsModal() {
+            document.getElementById('sheetsModal').classList.add('active');
+            if (googleSheetUrl) {
+                document.getElementById('sheetsUrl').value = googleSheetUrl;
+                document.getElementById('autoRefresh').checked = localStorage.getItem('autoRefreshSheets') === 'true';
+            }
+        }
+
+        function hideSheetsModal() {
+            document.getElementById('sheetsModal').classList.remove('active');
+        }
+
+        async function importFromUrl() {
+            const url = document.getElementById('importUrl').value.trim();
+            if (!url) return alert('Please enter a URL');
+
+            try {
+                const response = await fetch(url);
+                const text = await response.text();
+                const fileName = url.split('/').pop() || 'imported_data.csv';
+
+                const fileData = parseCSVToArray(text);
+                const trades = parseFileData(fileData);
+
+                if (trades.length > 0) {
+                    loadedFiles[fileName] = {
+                        name: fileName,
+                        trades: trades,
+                        source: 'url',
+                        url: url,
+                        loadedAt: new Date().toISOString()
+                    };
+                    saveToStorage();
+                    rebuildData();
+                    updateUI();
+                    hideUrlModal();
+                } else {
+                    alert('No valid trades found in the file');
+                }
+            } catch (error) {
+                alert('Error importing from URL: ' + error.message);
+            }
+        }
+
+        async function connectGoogleSheets() {
+            const url = document.getElementById('sheetsUrl').value.trim();
+            const autoRefresh = document.getElementById('autoRefresh').checked;
+
+            if (!url) return alert('Please enter the Google Sheets published URL');
+
+            try {
+                const response = await fetch(url);
+                const text = await response.text();
+
+                const fileData = parseCSVToArray(text);
+                const trades = parseFileData(fileData);
+
+                if (trades.length > 0) {
+                    googleSheetUrl = url;
+                    localStorage.setItem('googleSheetUrl', url);
+                    localStorage.setItem('autoRefreshSheets', autoRefresh);
+
+                    loadedFiles['Google Sheets'] = {
+                        name: 'Google Sheets',
+                        trades: trades,
+                        source: 'google_sheets',
+                        url: url,
+                        loadedAt: new Date().toISOString()
+                    };
+                    saveToStorage();
+                    rebuildData();
+                    updateUI();
+                    hideSheetsModal();
+                } else {
+                    alert('No valid trades found in the sheet');
+                }
+            } catch (error) {
+                alert('Error connecting to Google Sheets: ' + error.message);
+            }
+        }
+
+        async function checkAutoRefresh() {
+            const autoRefresh = localStorage.getItem('autoRefreshSheets') === 'true';
+            const url = localStorage.getItem('googleSheetUrl');
+
+            if (autoRefresh && url) {
+                try {
+                    const response = await fetch(url);
+                    const text = await response.text();
+                    const fileData = parseCSVToArray(text);
+                    const trades = parseFileData(fileData);
+
+                    if (trades.length > 0) {
+                        loadedFiles['Google Sheets'] = {
+                            name: 'Google Sheets',
+                            trades: trades,
+                            source: 'google_sheets',
+                            url: url,
+                            loadedAt: new Date().toISOString()
+                        };
+                        saveToStorage();
+                        rebuildData();
+                        updateUI();
+                    }
+                } catch (error) {
+                    console.warn('Auto-refresh failed:', error);
+                }
+            }
+        }
+
+        function handleFiles(files) {
+            Array.from(files).forEach(file => {
+                if (file.name.match(/\.(xlsx|xls|csv)$/i)) {
+                    processFile(file);
+                }
+            });
+        }
+
+        function processFile(file) {
+            const reader = new FileReader();
+            const isExcel = file.name.match(/\.(xlsx|xls)$/i);
+
+            reader.onload = (e) => {
+                try {
+                    let fileData;
+                    if (isExcel) {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                        const sheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[sheetName];
+                        fileData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false, dateNF: 'dd-mm-yyyy' });
+                    } else {
+                        fileData = parseCSVToArray(e.target.result);
+                    }
+
+                    const trades = parseFileData(fileData);
+                    if (trades.length > 0) {
+                        loadedFiles[file.name] = {
+                            name: file.name,
+                            trades: trades,
+                            source: 'file',
+                            loadedAt: new Date().toISOString()
+                        };
+                        saveToStorage();
+                        rebuildData();
+                        updateUI();
+                    }
+                } catch (error) {
+                    console.error('Error parsing file:', error);
+                    alert(`Error parsing ${file.name}: ${error.message}`);
+                }
+            };
+
+            if (isExcel) {
+                reader.readAsArrayBuffer(file);
+            } else {
+                reader.readAsText(file);
+            }
+        }
+
+        function parseCSVToArray(csv) {
+            const lines = csv.split('\n');
+            return lines.map(line => {
+                const result = [];
+                let current = '';
+                let inQuotes = false;
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    if (char === '"') inQuotes = !inQuotes;
+                    else if (char === ',' && !inQuotes) { result.push(current.trim()); current = ''; }
+                    else current += char;
+                }
+                result.push(current.trim());
+                return result;
+            });
+        }
+
+        function parseFileData(data) {
+            if (!data || data.length < 2) return [];
+
+            const headers = data[0].map(h => String(h || '').trim().toLowerCase());
+            const colIndices = {
+                date: findColumnIndex(headers, ['date', 'entry_date', 'trade_date']),
+                algo_name: findColumnIndex(headers, ['algo_name', 'algoname', 'strategy', 'algo']),
+                day: findColumnIndex(headers, ['day', 'weekday', 'day_of_week']),
+                underlying: findColumnIndex(headers, ['underlying', 'index', 'symbol', 'instrument']),
+                quantity: findColumnIndex(headers, ['quantity', 'qty', 'lots', 'size']),
+                profit_loss: findColumnIndex(headers, ['profit_loss', 'pnl', 'p&l', 'profit', 'pl', 'net_pnl', 'realized_pnl']),
+                exit_date: findColumnIndex(headers, ['exit_date', 'exitdate', 'close_date'])
+            };
+
+            const trades = [];
+            for (let i = 1; i < data.length; i++) {
+                const row = data[i];
+                if (!row || row.length === 0) continue;
+
+                const algoName = colIndices.algo_name >= 0 ? String(row[colIndices.algo_name] || '').replace(/"/g, '').trim() : '';
+                if (!algoName || algoName.toLowerCase() === 'algo_name') continue;
+
+                const profitLoss = parseNumber(colIndices.profit_loss >= 0 ? row[colIndices.profit_loss] : 0);
+                const quantity = parseNumber(colIndices.quantity >= 0 ? row[colIndices.quantity] : 0);
+                const dateVal = colIndices.date >= 0 ? row[colIndices.date] : null;
+                const exitDateVal = colIndices.exit_date >= 0 ? row[colIndices.exit_date] : dateVal;
+
+                const parsedDate = parseDate(dateVal);
+                const parsedExitDate = parseDate(exitDateVal || dateVal);
+
+                if (parsedDate || parsedExitDate) {
+                    trades.push({
+                        date: parsedDate ? parsedDate.toISOString() : null,
+                        exitDate: parsedExitDate ? parsedExitDate.toISOString() : null,
+                        algoName,
+                        day: colIndices.day >= 0 ? String(row[colIndices.day] || '').replace(/"/g, '').trim() : '',
+                        underlying: colIndices.underlying >= 0 ? String(row[colIndices.underlying] || '').replace(/"/g, '').trim() : '',
+                        quantity,
+                        profitLoss
+                    });
+                }
+            }
+            return trades;
+        }
+
+        function findColumnIndex(headers, possibleNames) {
+            for (const name of possibleNames) {
+                const idx = headers.findIndex(h => h === name || h.includes(name));
+                if (idx >= 0) return idx;
+            }
+            return -1;
+        }
+
+        function parseNumber(val) {
+            if (typeof val === 'number') return val;
+            const str = String(val || '0').replace(/[,\s₹"]/g, '');
+            return parseFloat(str) || 0;
+        }
+
+        function parseDate(dateValue) {
+            if (!dateValue) return null;
+            if (dateValue instanceof Date && !isNaN(dateValue)) return dateValue;
+
+            if (typeof dateValue === 'number') {
+                const excelEpoch = new Date(1899, 11, 30);
+                const msPerDay = 24 * 60 * 60 * 1000;
+                return new Date(excelEpoch.getTime() + dateValue * msPerDay);
+            }
+
+            const str = String(dateValue).replace(/"/g, '').trim();
+            if (!str || str === 'date' || str === 'exit_date') return null;
+
+            let match;
+            const months = {'jan':0,'feb':1,'mar':2,'apr':3,'may':4,'jun':5,'jul':6,'aug':7,'sep':8,'oct':9,'nov':10,'dec':11};
+
+            match = str.match(/^(\d{1,2})[-\s]([a-zA-Z]{3,9})[-\s,]*(\d{2,4})$/);
+            if (match) {
+                const month = months[match[2].toLowerCase().substring(0, 3)];
+                if (month !== undefined) {
+                    let year = parseInt(match[3]);
+                    if (year < 100) year += 2000;
+                    return new Date(year, month, parseInt(match[1]));
+                }
+            }
+
+            match = str.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/);
+            if (match) return new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]));
+
+            match = str.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/);
+            if (match) return new Date(parseInt(match[3]), parseInt(match[2]) - 1, parseInt(match[1]));
+
+            match = str.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2})$/);
+            if (match) return new Date(2000 + parseInt(match[3]), parseInt(match[2]) - 1, parseInt(match[1]));
+
+            const native = new Date(str);
+            return isNaN(native) ? null : native;
+        }
+
+        function rebuildData() {
+            rawData = [];
+            Object.values(loadedFiles).forEach(file => {
+                file.trades.forEach(trade => {
+                    rawData.push({
+                        ...trade,
+                        date: trade.date ? new Date(trade.date) : null,
+                        exitDate: trade.exitDate ? new Date(trade.exitDate) : null
+                    });
+                });
+            });
+            processData();
+        }
+
+        function processData() {
+            const strategyData = {};
+
+            rawData.forEach(row => {
+                const baseStrategy = getBaseStrategyName(row.algoName);
+                const index = simplifyIndexName(row.underlying);
+                const algoType = getAlgoType(baseStrategy);
+                const lotSize = CONFIG.LOT_SIZES[index] || 50;
+                const lots = lotSize > 0 ? row.quantity / lotSize : 0;
+                const marginPerLot = CONFIG.MARGINS[algoType] || CONFIG.MARGINS['Multi-Leg'];
+                const margin = marginPerLot * lots;
+
+                const dateKey = (row.exitDate || row.date)?.toDateString();
+                const mergeKey = `${dateKey}|${row.algoName}`;
+
+                if (!strategyData[baseStrategy]) strategyData[baseStrategy] = {};
+
+                if (!strategyData[baseStrategy][mergeKey]) {
+                    strategyData[baseStrategy][mergeKey] = {
+                        date: row.exitDate || row.date,
+                        algoName: row.algoName,
+                        baseStrategy,
+                        algoType,
+                        day: row.day,
+                        index,
+                        lots,
+                        margin,
+                        profitLoss: 0
+                    };
+                }
+                strategyData[baseStrategy][mergeKey].profitLoss += row.profitLoss;
+            });
+
+            processedData = [];
+            Object.values(strategyData).forEach(strategies => {
+                Object.values(strategies).forEach(trade => {
+                    trade.returnPercent = trade.margin > 0 ? (trade.profitLoss / trade.margin) * 100 : 0;
+                    processedData.push(trade);
+                });
+            });
+
+            processedData.sort((a, b) => (a.date || new Date(0)) - (b.date || new Date(0)));
+
+            let cumulative = 0, peak = 0;
+            processedData.forEach(trade => {
+                cumulative += trade.profitLoss;
+                trade.cumulative = cumulative;
+                peak = Math.max(peak, cumulative);
+                trade.drawdown = cumulative - peak;
+            });
+
+            filteredData = [...processedData];
+            updateStrategyPills();
+        }
+
+        function getBaseStrategyName(algoName) {
+            let baseName = algoName.replace(/^THU\s+/i, '').replace(/\s+Tue$/i, '').replace(/\s+thu$/i, '').trim();
+            const groupOrder = ['RSE CP', 'PTS-IV', 'PTS-PCR', 'PTS-ATR', 'RSI Trend', 'All Overnight-Hedge',
+                              'BID', 'CTS', 'Sniper', 'RSE', 'TrendSelector', 'IntraIV', 'OptionCrack', 'Sixth Sense', 'PTS-Other'];
+
+            for (const groupName of groupOrder) {
+                const patterns = CONFIG.STRATEGY_GROUPS[groupName];
+                if (patterns?.some(p => baseName.startsWith(p) || baseName.includes(p))) return groupName;
+            }
+            return baseName;
+        }
+
+        function simplifyIndexName(name) {
+            if (!name) return 'Unknown';
+            const upper = name.toUpperCase();
+            if (upper.includes('BANK') && upper.includes('NIFTY')) return 'BankNifty';
+            if (upper.includes('FINNIFTY') || upper.includes('FIN NIFTY')) return 'Finnifty';
+            if (upper.includes('MIDCAP')) return 'MidcapNifty';
+            if (upper.includes('SENSEX')) return 'Sensex';
+            if (upper.includes('NIFTY')) return 'Nifty';
+            return name;
+        }
+
+        function getAlgoType(strategyName) {
+            if (CONFIG.SINGLE_LEG_STRATEGIES.includes(strategyName)) return 'Single-Leg';
+            return 'Multi-Leg';
+        }
+
+        function updateStrategyPills() {
+            const strategies = [...new Set(processedData.map(t => t.baseStrategy))].sort();
+            const container = document.getElementById('strategyPills');
+            container.innerHTML = '<span class="strategy-pill active" data-strategy="all">All Strategies</span>' +
+                strategies.map(s => `<span class="strategy-pill" data-strategy="${s}">${s}</span>`).join('');
+
+            container.querySelectorAll('.strategy-pill').forEach(pill => {
+                pill.addEventListener('click', () => {
+                    container.querySelectorAll('.strategy-pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    currentStrategy = pill.dataset.strategy;
+                    applyFilters();
+                });
+            });
+        }
+
+        function updateUI() {
+            const hasData = Object.keys(loadedFiles).length > 0;
+
+            document.getElementById('uploadSection').classList.toggle('has-files', hasData);
+            document.getElementById('uploadContent').classList.toggle('hidden', hasData);
+            document.getElementById('filesContainer').classList.toggle('hidden', !hasData);
+            document.getElementById('datePresets').classList.toggle('hidden', !hasData);
+            document.getElementById('strategyPills').classList.toggle('hidden', !hasData);
+            document.getElementById('filtersRow').classList.toggle('hidden', !hasData);
+            document.getElementById('statsGrid').classList.toggle('hidden', !hasData);
+            document.getElementById('performanceSummary').classList.toggle('hidden', !hasData);
+            document.getElementById('chartsWrapper').classList.toggle('hidden', !hasData);
+
+            updateFilesList();
+            if (hasData) applyFilters();
+        }
+
+        function updateFilesList() {
+            const container = document.getElementById('filesList');
+            const files = Object.values(loadedFiles);
+
+            container.innerHTML = files.map(file => `
+                <div class="file-chip">
+                    <span class="file-name">${file.name}</span>
+                    <span class="file-count">${file.trades.length}</span>
+                    <button class="remove-btn" onclick="removeFile('${file.name}')" title="Remove">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+            `).join('');
+
+            const totalTrades = files.reduce((sum, f) => sum + f.trades.length, 0);
+            document.getElementById('storageStatus').textContent = hasData() ? `${totalTrades} trades saved` : 'No data loaded';
+        }
+
+        function hasData() {
+            return Object.keys(loadedFiles).length > 0;
+        }
+
+        function removeFile(fileName) {
+            delete loadedFiles[fileName];
+            if (fileName === 'Google Sheets') {
+                localStorage.removeItem('googleSheetUrl');
+                localStorage.removeItem('autoRefreshSheets');
+                googleSheetUrl = null;
+            }
+            saveToStorage();
+            rebuildData();
+            updateUI();
+        }
+
+        function clearAllData() {
+            if (confirm('Clear all loaded data?')) {
+                loadedFiles = {};
+                rawData = [];
+                processedData = [];
+                filteredData = [];
+                googleSheetUrl = null;
+                localStorage.removeItem('googleSheetUrl');
+                localStorage.removeItem('autoRefreshSheets');
+                saveToStorage();
+                updateUI();
+            }
+        }
+
+        function saveToStorage() {
+            try {
+                localStorage.setItem('performanceDashboardFiles', JSON.stringify(loadedFiles));
+            } catch (e) {
+                console.warn('Could not save to localStorage:', e);
+            }
+        }
+
+        function loadFromStorage() {
+            try {
+                const saved = localStorage.getItem('performanceDashboardFiles');
+                if (saved) {
+                    loadedFiles = JSON.parse(saved);
+                    rebuildData();
+                    updateUI();
+                }
+                googleSheetUrl = localStorage.getItem('googleSheetUrl');
+            } catch (e) {
+                console.warn('Could not load from localStorage:', e);
+            }
+        }
+
+        function getDateRange() {
+            const today = new Date();
+            today.setHours(23, 59, 59, 999);
+            let fromDate = null;
+
+            if (currentDatePreset === 'all') {
+                return { fromDate: null, toDate: null };
+            } else if (currentDatePreset === 'mtd') {
+                fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
+            } else if (currentDatePreset === 'ytd') {
+                fromDate = new Date(today.getFullYear(), 0, 1);
+            } else {
+                const days = parseInt(currentDatePreset);
+                if (!isNaN(days)) {
+                    fromDate = new Date(today);
+                    fromDate.setDate(fromDate.getDate() - days);
+                }
+            }
+
+            return { fromDate, toDate: today };
+        }
+
+        function applyFilters() {
+            const { fromDate, toDate } = getDateRange();
+            const index = document.getElementById('indexSelect').value;
+
+            filteredData = processedData.filter(trade => {
+                if (fromDate && trade.date < fromDate) return false;
+                if (toDate && trade.date > toDate) return false;
+                if (currentStrategy !== 'all' && trade.baseStrategy !== currentStrategy) return false;
+                if (index !== 'all' && trade.index !== index) return false;
+                return true;
+            });
+
+            let cumulative = 0, peak = 0;
+            filteredData.forEach(trade => {
+                cumulative += trade.profitLoss;
+                trade.filteredCumulative = cumulative;
+                peak = Math.max(peak, cumulative);
+                trade.filteredDrawdown = cumulative - peak;
+            });
+
+            updateStats();
+            updateCharts();
+        }
+
+        function updateStats() {
+            const total = filteredData.length;
+            const totalPL = filteredData.reduce((s, t) => s + t.profitLoss, 0);
+            const wins = filteredData.filter(t => t.profitLoss > 0).length;
+            const winRate = total > 0 ? (wins / total) * 100 : 0;
+            const avgPL = total > 0 ? totalPL / total : 0;
+            const maxDD = Math.min(...filteredData.map(t => t.filteredDrawdown || 0), 0);
+            const grossProfit = filteredData.filter(t => t.profitLoss > 0).reduce((s, t) => s + t.profitLoss, 0);
+            const grossLoss = Math.abs(filteredData.filter(t => t.profitLoss < 0).reduce((s, t) => s + t.profitLoss, 0));
+            const pf = grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? 999 : 0;
+
+            // Animate stat values
+            animateValue('statTotalTrades', total);
+            document.getElementById('statTotalPL').textContent = formatCurrency(totalPL);
+            document.getElementById('statTotalPL').classList.add('animated');
+            document.getElementById('statWinRate').textContent = winRate.toFixed(1) + '%';
+            document.getElementById('statAvgPL').textContent = formatCurrency(avgPL);
+            document.getElementById('statMaxDD').textContent = formatCurrency(maxDD);
+            document.getElementById('statProfitFactor').textContent = pf.toFixed(2);
+
+            // Calmar Ratio = Annualized Return / Max Drawdown
+            // For simplicity, we calculate: Total P&L / |Max DD|
+            const calmar = maxDD !== 0 ? (totalPL / Math.abs(maxDD)).toFixed(2) : (totalPL > 0 ? '∞' : '0');
+            document.getElementById('statCalmar').textContent = calmar;
+
+            document.getElementById('statPLCard').className = `stat-card ${totalPL >= 0 ? 'positive' : 'negative'}`;
+            document.getElementById('statWinRateCard').className = `stat-card ${winRate >= 50 ? 'positive' : 'negative'}`;
+
+            // Update sparklines
+            updateSparklines();
+
+            // Update performance summary
+            updatePerformanceSummary();
+        }
+
+        function animateValue(elementId, value) {
+            const el = document.getElementById(elementId);
+            el.classList.add('animated');
+            el.textContent = value;
+            setTimeout(() => el.classList.remove('animated'), 500);
+        }
+
+        function updateSparklines() {
+            // Get last 7 days of daily P&L
+            const daily = getDailyData();
+            const last7 = daily.slice(-7);
+
+            const maxAbs = Math.max(...last7.map(d => Math.abs(d.totalPL)), 1);
+
+            document.getElementById('sparklinePL').innerHTML = last7.map(d => {
+                const height = Math.max((Math.abs(d.totalPL) / maxAbs) * 25, 3);
+                return `<div class="sparkline-bar ${d.totalPL >= 0 ? 'up' : 'down'}" style="height: ${height}px;"></div>`;
+            }).join('');
+        }
+
+        function getDailyData() {
+            const daily = {};
+            filteredData.forEach(t => {
+                const key = t.date?.toDateString();
+                if (!key) return;
+                if (!daily[key]) daily[key] = { date: t.date, day: t.day, trades: 0, totalPL: 0 };
+                daily[key].trades++;
+                daily[key].totalPL += t.profitLoss;
+            });
+
+            const arr = Object.values(daily).sort((a, b) => a.date - b.date);
+            let cum = 0, peak = 0;
+            arr.forEach(d => {
+                cum += d.totalPL;
+                d.cumulative = cum;
+                peak = Math.max(peak, cum);
+                d.drawdown = cum - peak;
+            });
+            return arr;
+        }
+
+        function updatePerformanceSummary() {
+            const daily = getDailyData();
+
+            if (daily.length === 0) {
+                document.getElementById('bestDay').textContent = '-';
+                document.getElementById('worstDay').textContent = '-';
+                document.getElementById('currentStreak').textContent = '-';
+                document.getElementById('daysSincePeak').textContent = '-';
+                document.getElementById('rollingWinRate').textContent = '-';
+                document.getElementById('rollingAvgPL').textContent = '-';
+                return;
+            }
+
+            // Best/Worst day
+            const bestDay = daily.reduce((a, b) => a.totalPL > b.totalPL ? a : b);
+            const worstDay = daily.reduce((a, b) => a.totalPL < b.totalPL ? a : b);
+
+            document.getElementById('bestDay').textContent = formatCurrency(bestDay.totalPL);
+            document.getElementById('worstDay').textContent = formatCurrency(worstDay.totalPL);
+
+            // Current streak
+            let streak = 0, streakType = '';
+            for (let i = daily.length - 1; i >= 0; i--) {
+                const isWin = daily[i].totalPL > 0;
+                if (i === daily.length - 1) {
+                    streakType = isWin ? 'W' : 'L';
+                    streak = 1;
+                } else if ((isWin && streakType === 'W') || (!isWin && streakType === 'L')) {
+                    streak++;
+                } else {
+                    break;
+                }
+            }
+            document.getElementById('currentStreak').textContent = `${streak} ${streakType}`;
+            document.getElementById('currentStreak').className = `value ${streakType === 'W' ? 'positive' : 'negative'}`;
+
+            // Days since peak
+            const peakIndex = daily.findIndex(d => d.cumulative === Math.max(...daily.map(x => x.cumulative)));
+            const daysSincePeak = daily.length - 1 - peakIndex;
+            document.getElementById('daysSincePeak').textContent = daysSincePeak === 0 ? 'At Peak' : `${daysSincePeak} days`;
+
+            // 30-day rolling metrics
+            const last30 = filteredData.slice(-30);
+            if (last30.length > 0) {
+                const wins30 = last30.filter(t => t.profitLoss > 0).length;
+                const winRate30 = (wins30 / last30.length) * 100;
+                const avgPL30 = last30.reduce((s, t) => s + t.profitLoss, 0) / last30.length;
+
+                document.getElementById('rollingWinRate').textContent = winRate30.toFixed(1) + '%';
+                document.getElementById('rollingAvgPL').textContent = formatCurrency(avgPL30);
+                document.getElementById('rollingAvgPL').className = `value ${avgPL30 >= 0 ? 'positive' : 'negative'}`;
+            }
+        }
+
+        function updateCharts() {
+            updateEquityChart();
+            updateDrawdownChart();
+            updateMonthlyHeatmap();
+            updateDowAnalysis();
+            updateStreakVisualization();
+            updateHistogram();
+            updateTimeAnalysis();
+            updatePeriodComparison();
+            updateStrategyTable();
+        }
+
+        function updateEquityChart() {
+            const container = document.getElementById('equityChart');
+            if (!filteredData.length) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-muted);">No data</p>';
+                return;
+            }
+
+            const maxAbs = Math.max(...filteredData.map(t => Math.abs(t.filteredCumulative || 0)), 1);
+            const finalPL = filteredData[filteredData.length - 1]?.filteredCumulative || 0;
+            const peakValue = Math.max(...filteredData.map(t => t.filteredCumulative || 0));
+
+            document.getElementById('chartSummary').innerHTML = `<span style="color: ${finalPL >= 0 ? 'var(--accent-gold)' : 'var(--accent-red)'};">${formatCurrency(finalPL)}</span>`;
+
+            container.innerHTML = filteredData.map((t, i) => {
+                const cum = t.filteredCumulative || 0;
+                const height = Math.max((Math.abs(cum) / maxAbs) * 180, 2);
+                return `<div class="chart-bar ${cum >= 0 ? 'positive' : 'negative'}"
+                    style="height:${height}px"
+                    data-index="${i}"
+                    onmouseenter="showTooltip(event, ${i}, 'equity')"
+                    onmouseleave="hideTooltip()"></div>`;
+            }).join('');
+
+            // Show peak line
+            const peakHeight = (peakValue / maxAbs) * 180;
+            const peakLine = document.getElementById('peakLine');
+            const peakLabel = document.getElementById('peakLabel');
+            if (peakValue > 0) {
+                peakLine.style.display = 'block';
+                peakLine.style.bottom = `${peakHeight}px`;
+                peakLabel.style.bottom = `${peakHeight}px`;
+                peakLabel.textContent = `Peak: ${formatCurrency(peakValue)}`;
+            } else {
+                peakLine.style.display = 'none';
+            }
+        }
+
+        function updateDrawdownChart() {
+            const container = document.getElementById('drawdownChart');
+            const daily = getDailyData();
+
+            if (!daily.length) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-muted);">No data</p>';
+                return;
+            }
+
+            const maxDD = Math.min(...daily.map(d => d.drawdown), 0);
+            const maxAbsDD = Math.abs(maxDD) || 1;
+
+            document.getElementById('drawdownSummary').textContent = `Max: ${formatCurrency(maxDD)}`;
+
+            container.innerHTML = daily.map((d, i) => {
+                const height = Math.max((Math.abs(d.drawdown) / maxAbsDD) * 90, 0);
+                return `<div class="dd-bar"
+                    style="height:${height}px"
+                    data-index="${i}"
+                    onmouseenter="showTooltip(event, ${i}, 'drawdown')"
+                    onmouseleave="hideTooltip()"></div>`;
+            }).join('');
+        }
+
+        function updateMonthlyHeatmap() {
+            const container = document.getElementById('monthlyHeatmap');
+            const monthly = {};
+
+            filteredData.forEach(t => {
+                if (!t.date) return;
+                const key = `${t.date.getFullYear()}-${String(t.date.getMonth() + 1).padStart(2, '0')}`;
+                monthly[key] = (monthly[key] || 0) + t.profitLoss;
+            });
+
+            const months = Object.entries(monthly).sort((a, b) => a[0].localeCompare(b[0]));
+
+            container.innerHTML = months.map(([key, pl]) => {
+                const [year, month] = key.split('-');
+                const monthName = new Date(year, month - 1).toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+                return `<div class="heatmap-cell ${pl >= 0 ? 'profit' : 'loss'}">
+                    <div class="month-name">${monthName}</div>
+                    <div class="month-value">${formatCurrencyShort(pl)}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function updateDowAnalysis() {
+            const container = document.getElementById('dowAnalysis');
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+            const dayMap = { 'Mon': 0, 'Monday': 0, 'Tue': 1, 'Tuesday': 1, 'Wed': 2, 'Wednesday': 2, 'Thu': 3, 'Thursday': 3, 'Fri': 4, 'Friday': 4 };
+
+            const dayStats = days.map(() => ({ trades: 0, wins: 0, totalPL: 0 }));
+
+            filteredData.forEach(t => {
+                let dayIdx = -1;
+                if (t.day && dayMap[t.day] !== undefined) {
+                    dayIdx = dayMap[t.day];
+                } else if (t.date) {
+                    const dow = t.date.getDay();
+                    if (dow >= 1 && dow <= 5) dayIdx = dow - 1;
+                }
+                if (dayIdx >= 0) {
+                    dayStats[dayIdx].trades++;
+                    dayStats[dayIdx].totalPL += t.profitLoss;
+                    if (t.profitLoss > 0) dayStats[dayIdx].wins++;
+                }
+            });
+
+            container.innerHTML = days.map((day, i) => {
+                const stats = dayStats[i];
+                const winRate = stats.trades > 0 ? (stats.wins / stats.trades) * 100 : 0;
+                const avgPL = stats.trades > 0 ? stats.totalPL / stats.trades : 0;
+                return `
+                    <div class="dow-card">
+                        <div class="day-name">${day.substring(0, 3)}</div>
+                        <div class="day-pnl ${stats.totalPL >= 0 ? 'positive' : 'negative'}">${formatCurrencyShort(stats.totalPL)}</div>
+                        <div class="day-stats">${stats.trades} trades</div>
+                        <span class="day-winrate ${winRate >= 50 ? 'good' : 'bad'}">${winRate.toFixed(0)}%</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateStrategyTable() {
+            const tbody = document.getElementById('strategyTableBody');
+            const strategies = {};
+
+            filteredData.forEach(t => {
+                if (!strategies[t.baseStrategy]) strategies[t.baseStrategy] = [];
+                strategies[t.baseStrategy].push(t);
+            });
+
+            const stats = Object.entries(strategies).map(([name, trades]) => {
+                const total = trades.length;
+                const wins = trades.filter(t => t.profitLoss > 0).length;
+                const winRate = total > 0 ? (wins / total) * 100 : 0;
+                const totalPL = trades.reduce((s, t) => s + t.profitLoss, 0);
+                const avgPL = total > 0 ? totalPL / total : 0;
+
+                trades.sort((a, b) => a.date - b.date);
+                let cum = 0, peak = 0, maxDD = 0;
+                trades.forEach(t => { cum += t.profitLoss; peak = Math.max(peak, cum); maxDD = Math.min(maxDD, cum - peak); });
+
+                const gp = trades.filter(t => t.profitLoss > 0).reduce((s, t) => s + t.profitLoss, 0);
+                const gl = Math.abs(trades.filter(t => t.profitLoss < 0).reduce((s, t) => s + t.profitLoss, 0));
+                const pf = gl > 0 ? gp / gl : gp > 0 ? 99 : 0;
+
+                let grade = 'C';
+                if (winRate >= 60 && pf >= 1.5) grade = 'A';
+                else if (winRate >= 50 && pf >= 1.2) grade = 'B';
+
+                return { name, total, winRate, totalPL, avgPL, maxDD, pf, grade };
+            }).sort((a, b) => b.totalPL - a.totalPL);
+
+            tbody.innerHTML = stats.map(s => `
+                <tr>
+                    <td class="strategy-name">${s.name}</td>
+                    <td>${s.total}</td>
+                    <td class="${s.winRate >= 50 ? 'positive' : 'negative'}">${s.winRate.toFixed(1)}%</td>
+                    <td class="${s.totalPL >= 0 ? 'positive' : 'negative'}">${formatCurrency(s.totalPL)}</td>
+                    <td>${formatCurrency(s.avgPL)}</td>
+                    <td class="negative">${formatCurrency(s.maxDD)}</td>
+                    <td>${s.pf.toFixed(2)}</td>
+                    <td><span class="grade grade-${s.grade.toLowerCase()}">${s.grade}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function updateStreakVisualization() {
+            const container = document.getElementById('streakContainer');
+            const summary = document.getElementById('streakSummary');
+
+            // Get last 50 trades
+            const last50 = filteredData.slice(-50);
+
+            if (last50.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted);">No trades to display</p>';
+                summary.innerHTML = '';
+                return;
+            }
+
+            // Calculate streak stats
+            let maxWinStreak = 0, maxLossStreak = 0, currentStreak = 0, currentType = null;
+            let tempStreak = 0, tempType = null;
+
+            last50.forEach((t, i) => {
+                const isWin = t.profitLoss > 0;
+                if (i === 0) {
+                    tempType = isWin ? 'W' : 'L';
+                    tempStreak = 1;
+                } else if ((isWin && tempType === 'W') || (!isWin && tempType === 'L')) {
+                    tempStreak++;
+                } else {
+                    if (tempType === 'W') maxWinStreak = Math.max(maxWinStreak, tempStreak);
+                    else maxLossStreak = Math.max(maxLossStreak, tempStreak);
+                    tempType = isWin ? 'W' : 'L';
+                    tempStreak = 1;
+                }
+            });
+
+            // Final streak
+            if (tempType === 'W') maxWinStreak = Math.max(maxWinStreak, tempStreak);
+            else maxLossStreak = Math.max(maxLossStreak, tempStreak);
+            currentStreak = tempStreak;
+            currentType = tempType;
+
+            // Render boxes
+            container.innerHTML = last50.map((t, i) => {
+                const isWin = t.profitLoss > 0;
+                const isNeutral = t.profitLoss === 0;
+                const cls = isNeutral ? 'neutral' : (isWin ? 'win' : 'loss');
+                const label = isNeutral ? '-' : (isWin ? 'W' : 'L');
+                return `<div class="streak-box ${cls}"
+                    title="${formatDate(t.date)}: ${formatCurrency(t.profitLoss)}"
+                    onmouseenter="showTooltip(event, ${filteredData.length - 50 + i}, 'equity')"
+                    onmouseleave="hideTooltip()">${label}</div>`;
+            }).join('');
+
+            // Render summary
+            summary.innerHTML = `
+                <div class="streak-stat">
+                    <div class="label">Current</div>
+                    <div class="value ${currentType === 'W' ? 'green' : 'red'}">${currentStreak} ${currentType}</div>
+                </div>
+                <div class="streak-stat">
+                    <div class="label">Max Win Streak</div>
+                    <div class="value green">${maxWinStreak}</div>
+                </div>
+                <div class="streak-stat">
+                    <div class="label">Max Loss Streak</div>
+                    <div class="value red">${maxLossStreak}</div>
+                </div>
+                <div class="streak-stat">
+                    <div class="label">Win Rate (Last 50)</div>
+                    <div class="value gold">${((last50.filter(t => t.profitLoss > 0).length / last50.length) * 100).toFixed(1)}%</div>
+                </div>
+            `;
+        }
+
+        function updateHistogram() {
+            const barsContainer = document.getElementById('histogramBars');
+            const labelsContainer = document.getElementById('histogramLabels');
+            const statsContainer = document.getElementById('histogramStats');
+
+            if (filteredData.length === 0) {
+                barsContainer.innerHTML = '<p style="color: var(--text-muted);">No data</p>';
+                labelsContainer.innerHTML = '';
+                statsContainer.innerHTML = '';
+                return;
+            }
+
+            // Create buckets for P&L distribution
+            const pnlValues = filteredData.map(t => t.profitLoss);
+            const minPL = Math.min(...pnlValues);
+            const maxPL = Math.max(...pnlValues);
+
+            // Create 10 buckets
+            const bucketCount = 10;
+            const range = maxPL - minPL || 1;
+            const bucketSize = range / bucketCount;
+            const buckets = Array(bucketCount).fill(0);
+
+            pnlValues.forEach(pl => {
+                let bucketIdx = Math.floor((pl - minPL) / bucketSize);
+                if (bucketIdx >= bucketCount) bucketIdx = bucketCount - 1;
+                buckets[bucketIdx]++;
+            });
+
+            const maxCount = Math.max(...buckets, 1);
+            const zeroIdx = Math.floor((0 - minPL) / bucketSize);
+
+            barsContainer.innerHTML = buckets.map((count, i) => {
+                const height = (count / maxCount) * 110;
+                const bucketStart = minPL + (i * bucketSize);
+                const bucketEnd = bucketStart + bucketSize;
+                const isNegative = bucketEnd <= 0;
+                const isPositive = bucketStart >= 0;
+                const cls = isNegative ? 'negative' : (isPositive ? 'positive' : 'positive');
+                return `<div class="histogram-bar ${cls}"
+                    style="height: ${Math.max(height, 4)}px; flex: 1;"
+                    title="${formatCurrencyShort(bucketStart)} to ${formatCurrencyShort(bucketEnd)}: ${count} trades"></div>`;
+            }).join('');
+
+            labelsContainer.innerHTML = `
+                <span>${formatCurrencyShort(minPL)}</span>
+                <span>0</span>
+                <span>${formatCurrencyShort(maxPL)}</span>
+            `;
+
+            // Stats
+            const avgPL = pnlValues.reduce((a, b) => a + b, 0) / pnlValues.length;
+            const variance = pnlValues.reduce((sum, pl) => sum + Math.pow(pl - avgPL, 2), 0) / pnlValues.length;
+            const stdDev = Math.sqrt(variance);
+            const avgWin = pnlValues.filter(p => p > 0);
+            const avgLoss = pnlValues.filter(p => p < 0);
+
+            statsContainer.innerHTML = `
+                <div class="streak-stat">
+                    <div class="label">Avg Win</div>
+                    <div class="value green">${avgWin.length > 0 ? formatCurrencyShort(avgWin.reduce((a,b) => a+b, 0) / avgWin.length) : '-'}</div>
+                </div>
+                <div class="streak-stat">
+                    <div class="label">Avg Loss</div>
+                    <div class="value red">${avgLoss.length > 0 ? formatCurrencyShort(avgLoss.reduce((a,b) => a+b, 0) / avgLoss.length) : '-'}</div>
+                </div>
+                <div class="streak-stat">
+                    <div class="label">Std Dev</div>
+                    <div class="value gold">${formatCurrencyShort(stdDev)}</div>
+                </div>
+            `;
+        }
+
+        function updateTimeAnalysis() {
+            const container = document.getElementById('timeAnalysis');
+
+            // Parse time from trades - need to check data format
+            const before1030 = { trades: 0, wins: 0, totalPL: 0 };
+            const after1030 = { trades: 0, wins: 0, totalPL: 0 };
+
+            filteredData.forEach(t => {
+                // Try to extract time from algoName or date
+                // Common format: "09:30", "10:15", etc. in the trade data
+                let tradeTime = null;
+
+                // Check if date has time component
+                if (t.date) {
+                    const hours = t.date.getHours();
+                    const minutes = t.date.getMinutes();
+                    if (hours > 0 || minutes > 0) {
+                        tradeTime = hours * 60 + minutes; // Convert to minutes
+                    }
+                }
+
+                // Check algoName for time patterns like "09:30" or "0930"
+                if (!tradeTime && t.algoName) {
+                    const timeMatch = t.algoName.match(/(\d{1,2}):?(\d{2})/);
+                    if (timeMatch) {
+                        const hours = parseInt(timeMatch[1]);
+                        const minutes = parseInt(timeMatch[2]);
+                        if (hours >= 9 && hours <= 16) {
+                            tradeTime = hours * 60 + minutes;
+                        }
+                    }
+                }
+
+                // 10:30 AM = 630 minutes from midnight
+                const cutoff = 10 * 60 + 30; // 10:30 AM
+
+                if (tradeTime !== null) {
+                    if (tradeTime < cutoff) {
+                        before1030.trades++;
+                        before1030.totalPL += t.profitLoss;
+                        if (t.profitLoss > 0) before1030.wins++;
+                    } else {
+                        after1030.trades++;
+                        after1030.totalPL += t.profitLoss;
+                        if (t.profitLoss > 0) after1030.wins++;
+                    }
+                }
+            });
+
+            // If no time data found, show message
+            if (before1030.trades === 0 && after1030.trades === 0) {
+                container.innerHTML = `
+                    <div class="time-card" style="grid-column: span 2; text-align: center;">
+                        <p style="color: var(--text-muted);">No time data available in trades. Time analysis requires entry time in the data.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const renderCard = (label, data) => {
+                const winRate = data.trades > 0 ? (data.wins / data.trades) * 100 : 0;
+                const avgPL = data.trades > 0 ? data.totalPL / data.trades : 0;
+                return `
+                    <div class="time-card">
+                        <div class="time-label">${label}</div>
+                        <div class="time-pnl ${data.totalPL >= 0 ? 'positive' : 'negative'}">${formatCurrency(data.totalPL)}</div>
+                        <div class="time-stats">
+                            <span>
+                                <span class="stat-val">${data.trades}</span>
+                                trades
+                            </span>
+                            <span>
+                                <span class="stat-val">${winRate.toFixed(1)}%</span>
+                                win rate
+                            </span>
+                            <span>
+                                <span class="stat-val">${formatCurrencyShort(avgPL)}</span>
+                                avg
+                            </span>
+                        </div>
+                    </div>
+                `;
+            };
+
+            container.innerHTML = renderCard('Before 10:30 AM', before1030) + renderCard('After 10:30 AM', after1030);
+        }
+
+        function updatePeriodComparison() {
+            const container = document.getElementById('comparisonGrid');
+            const period1 = document.getElementById('period1Select').value;
+            const period2 = document.getElementById('period2Select').value;
+
+            const getPeriodData = (periodKey) => {
+                const today = new Date();
+                today.setHours(23, 59, 59, 999);
+                let fromDate, toDate = today;
+
+                switch (periodKey) {
+                    case 'this_month':
+                        fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
+                        break;
+                    case 'last_month':
+                        fromDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                        toDate = new Date(today.getFullYear(), today.getMonth(), 0, 23, 59, 59);
+                        break;
+                    case 'this_week':
+                        fromDate = new Date(today);
+                        fromDate.setDate(today.getDate() - today.getDay() + 1); // Monday
+                        break;
+                    case 'last_week':
+                        fromDate = new Date(today);
+                        fromDate.setDate(today.getDate() - today.getDay() - 6); // Last Monday
+                        toDate = new Date(today);
+                        toDate.setDate(today.getDate() - today.getDay()); // Last Sunday
+                        break;
+                    case 'last_30':
+                        fromDate = new Date(today);
+                        fromDate.setDate(today.getDate() - 30);
+                        break;
+                    case 'last_90':
+                        fromDate = new Date(today);
+                        fromDate.setDate(today.getDate() - 90);
+                        break;
+                    default:
+                        fromDate = new Date(0);
+                }
+
+                const periodTrades = processedData.filter(t => t.date >= fromDate && t.date <= toDate);
+
+                const total = periodTrades.length;
+                const wins = periodTrades.filter(t => t.profitLoss > 0).length;
+                const totalPL = periodTrades.reduce((s, t) => s + t.profitLoss, 0);
+                const avgPL = total > 0 ? totalPL / total : 0;
+                const winRate = total > 0 ? (wins / total) * 100 : 0;
+
+                let cum = 0, peak = 0, maxDD = 0;
+                periodTrades.sort((a, b) => a.date - b.date).forEach(t => {
+                    cum += t.profitLoss;
+                    peak = Math.max(peak, cum);
+                    maxDD = Math.min(maxDD, cum - peak);
+                });
+
+                const gp = periodTrades.filter(t => t.profitLoss > 0).reduce((s, t) => s + t.profitLoss, 0);
+                const gl = Math.abs(periodTrades.filter(t => t.profitLoss < 0).reduce((s, t) => s + t.profitLoss, 0));
+                const pf = gl > 0 ? gp / gl : gp > 0 ? 99 : 0;
+
+                return { total, wins, totalPL, avgPL, winRate, maxDD, pf };
+            };
+
+            const data1 = getPeriodData(period1);
+            const data2 = getPeriodData(period2);
+
+            const periodLabels = {
+                'this_month': 'This Month',
+                'last_month': 'Last Month',
+                'this_week': 'This Week',
+                'last_week': 'Last Week',
+                'last_30': 'Last 30D',
+                'last_90': 'Last 90D'
+            };
+
+            const renderComparison = (metric, val1, val2, format = 'currency', higherIsBetter = true) => {
+                let formatted1, formatted2;
+                if (format === 'currency') {
+                    formatted1 = formatCurrencyShort(val1);
+                    formatted2 = formatCurrencyShort(val2);
+                } else if (format === 'percent') {
+                    formatted1 = val1.toFixed(1) + '%';
+                    formatted2 = val2.toFixed(1) + '%';
+                } else {
+                    formatted1 = val1.toFixed(2);
+                    formatted2 = val2.toFixed(2);
+                }
+
+                const diff = val1 - val2;
+                const isBetter = higherIsBetter ? diff > 0 : diff < 0;
+                const changeText = diff === 0 ? '=' : (diff > 0 ? '↑' : '↓');
+
+                return `
+                    <div class="compare-card">
+                        <div class="metric-name">${metric}</div>
+                        <div class="compare-values">
+                            <div class="compare-period">
+                                <div class="period-label">${periodLabels[period1]}</div>
+                                <div class="period-value ${val1 >= 0 ? 'positive' : 'negative'}">${formatted1}</div>
+                            </div>
+                            <span class="vs-divider">vs</span>
+                            <div class="compare-period">
+                                <div class="period-label">${periodLabels[period2]}</div>
+                                <div class="period-value ${val2 >= 0 ? 'positive' : 'negative'}">${formatted2}</div>
+                            </div>
+                        </div>
+                        <div class="compare-change ${isBetter ? 'better' : 'worse'}" style="margin-top: 8px;">
+                            ${changeText} ${format === 'currency' ? formatCurrencyShort(Math.abs(diff)) : Math.abs(diff).toFixed(1) + (format === 'percent' ? '%' : '')}
+                        </div>
+                    </div>
+                `;
+            };
+
+            container.innerHTML = `
+                ${renderComparison('Total P&L', data1.totalPL, data2.totalPL, 'currency', true)}
+                ${renderComparison('Trades', data1.total, data2.total, 'number', true)}
+                ${renderComparison('Win Rate', data1.winRate, data2.winRate, 'percent', true)}
+                ${renderComparison('Avg P&L', data1.avgPL, data2.avgPL, 'currency', true)}
+                ${renderComparison('Max Drawdown', data1.maxDD, data2.maxDD, 'currency', false)}
+                ${renderComparison('Profit Factor', data1.pf, data2.pf, 'number', true)}
+            `;
+        }
+
+        // Tooltip functions
+        let tooltipData = { daily: [], equity: [] };
+
+        function showTooltip(event, index, type) {
+            const tooltip = document.getElementById('chartTooltip');
+            let data;
+
+            if (type === 'equity') {
+                data = filteredData[index];
+                if (!data) return;
+                tooltip.querySelector('.tooltip-date').textContent = formatDate(data.date);
+                tooltip.querySelector('.tooltip-content').innerHTML = `
+                    <div class="tooltip-row">
+                        <span class="tooltip-label">Strategy</span>
+                        <span class="tooltip-value">${data.baseStrategy}</span>
+                    </div>
+                    <div class="tooltip-row">
+                        <span class="tooltip-label">P&L</span>
+                        <span class="tooltip-value" style="color: ${data.profitLoss >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">${formatCurrency(data.profitLoss)}</span>
+                    </div>
+                    <div class="tooltip-row">
+                        <span class="tooltip-label">Cumulative</span>
+                        <span class="tooltip-value" style="color: ${data.filteredCumulative >= 0 ? 'var(--accent-gold)' : 'var(--accent-red)'}">${formatCurrency(data.filteredCumulative)}</span>
+                    </div>
+                `;
+            } else {
+                const daily = getDailyData();
+                data = daily[index];
+                if (!data) return;
+                tooltip.querySelector('.tooltip-date').textContent = formatDate(data.date);
+
+                if (type === 'daily') {
+                    tooltip.querySelector('.tooltip-content').innerHTML = `
+                        <div class="tooltip-row">
+                            <span class="tooltip-label">Trades</span>
+                            <span class="tooltip-value">${data.trades}</span>
+                        </div>
+                        <div class="tooltip-row">
+                            <span class="tooltip-label">P&L</span>
+                            <span class="tooltip-value" style="color: ${data.totalPL >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">${formatCurrency(data.totalPL)}</span>
+                        </div>
+                    `;
+                } else {
+                    tooltip.querySelector('.tooltip-content').innerHTML = `
+                        <div class="tooltip-row">
+                            <span class="tooltip-label">Drawdown</span>
+                            <span class="tooltip-value" style="color: var(--accent-red)">${formatCurrency(data.drawdown)}</span>
+                        </div>
+                        <div class="tooltip-row">
+                            <span class="tooltip-label">Cumulative</span>
+                            <span class="tooltip-value">${formatCurrency(data.cumulative)}</span>
+                        </div>
+                    `;
+                }
+            }
+
+            tooltip.classList.add('active');
+            tooltip.style.left = Math.min(event.pageX + 10, window.innerWidth - 200) + 'px';
+            tooltip.style.top = (event.pageY - 80) + 'px';
+        }
+
+        function hideTooltip() {
+            document.getElementById('chartTooltip').classList.remove('active');
+        }
+
+        // Formatting functions
+        function formatDate(date) {
+            return date ? date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }) : '-';
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
+        }
+
+        function formatCurrencyShort(amount) {
+            if (Math.abs(amount) >= 100000) {
+                return (amount / 100000).toFixed(1) + 'L';
+            } else if (Math.abs(amount) >= 1000) {
+                return (amount / 1000).toFixed(1) + 'K';
+            }
+            return formatCurrency(amount);
+        }
+
+        function exportData() {
+            if (!filteredData.length) return alert('No data to export');
+            const csv = ['Date,Strategy,Index,Day,Lots,Margin,P&L,Return %,Cumulative']
+                .concat(filteredData.map(t => `${formatDate(t.date)},${t.baseStrategy},${t.index},${t.day},${t.lots.toFixed(2)},${t.margin.toFixed(0)},${t.profitLoss.toFixed(2)},${t.returnPercent.toFixed(2)},${t.filteredCumulative.toFixed(2)}`))
+                .join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `performance_data_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+        }
+    </script>
+</body>
+</html>
