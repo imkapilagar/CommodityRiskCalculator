@@ -40,7 +40,32 @@ Performance_Data/
 
 ## 📄 files.json Format
 
-Create a `files.json` file listing all your trading data files:
+Create a `files.json` file listing all your trading data files.
+
+### New Format (Recommended):
+Segregate strategy files and final P&L files:
+
+```json
+{
+  "strategy_files": [
+    "Pnl_Dec25.xlsx",
+    "PnL_Nov25.xlsx",
+    "PnL_Oct25.xlsx"
+  ],
+  "final_files": [
+    "Final_PnL_Dec25.xlsx"
+  ]
+}
+```
+
+**File Types:**
+- **strategy_files** - Individual strategy P&L (before costs)
+  - Shows with 🟡 STRATEGY badge (gold)
+- **final_files** - Consolidated P&L after all costs
+  - Shows with 🟢 FINAL badge (green)
+
+### Old Format (Still Supported):
+Simple array of files (all treated as strategy files):
 
 ```json
 ["Pnl_Dec25.xlsx", "PnL_Nov25.xlsx", "PnL_Oct25.xlsx"]
@@ -50,6 +75,38 @@ Create a `files.json` file listing all your trading data files:
 - `.xlsx` - Excel files
 - `.xls` - Legacy Excel
 - `.csv` - CSV files
+
+---
+
+## 🔀 Strategy vs Final Files
+
+### When to use Strategy Files:
+- Individual strategy performance tracking
+- Pre-cost analysis
+- Strategy-wise breakdowns
+- Comparing different trading approaches
+
+**Example:**
+- `Crude_Straddle_Dec25.xlsx` - Single strategy data
+- `BankNifty_Spreads_Dec25.xlsx` - Another strategy
+- `Gold_Scalping_Dec25.xlsx` - Yet another strategy
+
+### When to use Final Files:
+- Consolidated P&L after all costs (brokerage, taxes, etc.)
+- Overall account performance
+- Net profit/loss tracking
+- Month-end summaries
+
+**Example:**
+- `Final_PnL_Dec25.xlsx` - All strategies combined + costs deducted
+- `Account_Statement_Dec25.xlsx` - Net account P&L
+
+### Visual Indicators:
+The dashboard shows different badges:
+- 🟡 **STRATEGY** badge (Gold border) - Strategy files
+- 🟢 **FINAL** badge (Green border) - Final P&L files
+
+This helps you quickly identify which data you're analyzing.
 
 ---
 

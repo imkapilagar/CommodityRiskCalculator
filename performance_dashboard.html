@@ -385,14 +385,14 @@
         }
 
         .file-chip.file-equity {
-            border-color: #63b3ed;
-            background: rgba(99, 179, 237, 0.1);
+            border-color: #48bb78;
+            background: rgba(72, 187, 120, 0.15);
         }
         .file-chip.file-equity .file-count {
-            color: #63b3ed;
+            color: #48bb78;
         }
         .file-chip.file-equity .file-type {
-            color: #63b3ed;
+            color: #48bb78;
             font-size: 0.65rem;
             font-weight: 600;
         }
@@ -1534,7 +1534,10 @@
                     <span style="font-size: 0.75rem; color: var(--text-muted);">or manually: <code style="background: var(--bg-secondary); padding: 2px 6px; border-radius: 4px;">python3 cors_server.py</code></span><br><br>
 
                     3️⃣ Create <code style="background: var(--bg-secondary); padding: 2px 6px; border-radius: 4px;">files.json</code> with your files:<br>
-                    <code style="background: var(--bg-secondary); padding: 4px 8px; border-radius: 4px; display: block; margin: 4px 0; white-space: pre; font-size: 0.75rem;">["Pnl_Dec25.xlsx", "PnL_Nov25.xlsx"]</code><br>
+                    <code style="background: var(--bg-secondary); padding: 4px 8px; border-radius: 4px; display: block; margin: 4px 0; white-space: pre; font-size: 0.7rem; line-height: 1.4;">{
+  "strategy_files": ["Dec.xlsx", "Nov.xlsx"],
+  "final_files": ["Final_Dec.xlsx"]
+}</code><br>
 
                     <strong style="color: var(--accent-red); font-size: 0.8rem;">⚠️ Important:</strong> <span style="font-size: 0.8rem;">Use CORS-enabled server, not basic python3 -m http.server</span>
                 </p>
@@ -2075,10 +2078,25 @@
                     throw new Error(`Could not find files.json at ${filesListUrl}. Please create a files.json file listing your CSV files.`);
                 }
 
-                const filesList = await response.json();
+                const filesData = await response.json();
 
-                if (!Array.isArray(filesList) || filesList.length === 0) {
-                    throw new Error('files.json should be an array of file names, e.g., ["file1.csv", "file2.csv"]');
+                // Support both old array format and new object format
+                let strategyFiles = [];
+                let finalFiles = [];
+
+                if (Array.isArray(filesData)) {
+                    // Old format: ["file1.csv", "file2.csv"]
+                    strategyFiles = filesData;
+                } else if (typeof filesData === 'object') {
+                    // New format: { strategy_files: [...], final_files: [...] }
+                    strategyFiles = filesData.strategy_files || [];
+                    finalFiles = filesData.final_files || [];
+                } else {
+                    throw new Error('files.json should be an array or object with strategy_files/final_files');
+                }
+
+                if (strategyFiles.length === 0 && finalFiles.length === 0) {
+                    throw new Error('No files specified in files.json');
                 }
 
                 // Store the folder URL
@@ -2087,7 +2105,7 @@
                 localStorage.setItem('folderAutoRefresh', autoRefresh);
 
                 // Load all files from the folder
-                await loadFilesFromFolder(url, filesList);
+                await loadFilesFromFolder(url, strategyFiles, finalFiles);
 
                 hideFolderModal();
             } catch (error) {
@@ -2113,11 +2131,12 @@
             }
         }
 
-        async function loadFilesFromFolder(baseUrl, filesList) {
+        async function loadFilesFromFolder(baseUrl, strategyFiles, finalFiles = []) {
             let loadedCount = 0;
             let totalTrades = 0;
 
-            for (const fileName of filesList) {
+            // Load strategy files
+            for (const fileName of strategyFiles) {
                 try {
                     const fileUrl = `${baseUrl}/${fileName}`;
                     const isExcel = fileName.match(/\.(xlsx|xls)$/i);
@@ -2146,11 +2165,60 @@
                     const trades = parseFileData(fileData);
 
                     if (trades.length > 0) {
-                        const sourceKey = `Folder: ${fileName}`;
+                        const sourceKey = `Strategy: ${fileName}`;
                         loadedFiles[sourceKey] = {
                             name: fileName,
                             trades: trades,
                             source: 'folder',
+                            fileType: 'strategy',
+                            url: fileUrl,
+                            folderUrl: baseUrl,
+                            loadedAt: new Date().toISOString()
+                        };
+                        loadedCount++;
+                        totalTrades += trades.length;
+                    }
+                } catch (error) {
+                    console.warn(`Error loading ${fileName}:`, error);
+                }
+            }
+
+            // Load final P&L files
+            for (const fileName of finalFiles) {
+                try {
+                    const fileUrl = `${baseUrl}/${fileName}`;
+                    const isExcel = fileName.match(/\.(xlsx|xls)$/i);
+                    const response = await fetch(fileUrl);
+
+                    if (!response.ok) {
+                        console.warn(`Could not load ${fileName}`);
+                        continue;
+                    }
+
+                    let fileData;
+                    if (isExcel) {
+                        // Handle Excel files
+                        const arrayBuffer = await response.arrayBuffer();
+                        const data = new Uint8Array(arrayBuffer);
+                        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                        const sheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[sheetName];
+                        fileData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false, dateNF: 'dd-mm-yyyy' });
+                    } else {
+                        // Handle CSV files
+                        const text = await response.text();
+                        fileData = parseCSVToArray(text);
+                    }
+
+                    const trades = parseFileData(fileData);
+
+                    if (trades.length > 0) {
+                        const sourceKey = `Final: ${fileName}`;
+                        loadedFiles[sourceKey] = {
+                            name: fileName,
+                            trades: trades,
+                            source: 'folder',
+                            fileType: 'final',
                             url: fileUrl,
                             folderUrl: baseUrl,
                             loadedAt: new Date().toISOString()
@@ -2591,15 +2659,13 @@
 
             container.innerHTML = files.map(file => {
                 const fileType = file.fileType || 'strategy';
-                const chipClass = fileType === 'final_commodity' ? 'file-commodity' :
-                                  fileType === 'final_equity' ? 'file-equity' : 'file-strategy';
-                const typeLabel = fileType === 'final_commodity' ? 'Commodity' :
-                                  fileType === 'final_equity' ? 'Equity' : '';
+                const chipClass = fileType === 'final' ? 'file-equity' : 'file-strategy';
+                const typeLabel = fileType === 'final' ? 'FINAL' : 'STRATEGY';
 
                 return `
                 <div class="file-chip ${chipClass}">
                     <span class="file-name">${file.name}</span>
-                    ${typeLabel ? `<span class="file-type">${typeLabel}</span>` : ''}
+                    <span class="file-type">${typeLabel}</span>
                     <span class="file-count">${file.trades.length}</span>
                     <button class="remove-btn" onclick="removeFile('${file.name}')" title="Remove">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
