@@ -1524,19 +1524,11 @@
         <div class="modal-overlay" id="folderModal">
             <div class="modal">
                 <h3>Load from Local Folder</h3>
-                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px; line-height: 1.6;">
-                    <strong style="color: var(--accent-gold);">Quick Setup:</strong><br>
-                    1️⃣ Navigate to your data folder:<br>
-                    <code style="background: var(--bg-secondary); padding: 4px 8px; border-radius: 4px; display: inline-block; margin: 4px 0;">cd Performance_Data</code><br><br>
-
-                    2️⃣ Start CORS-enabled server:<br>
-                    <code style="background: var(--bg-secondary); padding: 4px 8px; border-radius: 4px; display: inline-block; margin: 4px 0;">./start_server.sh</code><br>
-                    <span style="font-size: 0.75rem; color: var(--text-muted);">or manually: <code style="background: var(--bg-secondary); padding: 2px 6px; border-radius: 4px;">python3 cors_server.py</code></span><br><br>
-
-                    3️⃣ Create <code style="background: var(--bg-secondary); padding: 2px 6px; border-radius: 4px;">files.json</code> with your files:<br>
-                    <code style="background: var(--bg-secondary); padding: 4px 8px; border-radius: 4px; display: block; margin: 4px 0; white-space: pre; font-size: 0.75rem;">["Pnl_Dec25.xlsx", "PnL_Nov25.xlsx"]</code><br>
-
-                    <strong style="color: var(--accent-red); font-size: 0.8rem;">⚠️ Important:</strong> <span style="font-size: 0.8rem;">Use CORS-enabled server, not basic python3 -m http.server</span>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">
+                    <strong>Setup:</strong> Run a local server in your data folder:<br>
+                    <code style="background: var(--bg-secondary); padding: 4px 8px; border-radius: 4px; display: inline-block; margin: 8px 0;">cd /path/to/folder && python3 -m http.server 8080</code><br><br>
+                    Create a <code style="background: var(--bg-secondary); padding: 2px 6px; border-radius: 4px;">files.json</code> listing your CSV files:
+                    <code style="background: var(--bg-secondary); padding: 4px 8px; border-radius: 4px; display: block; margin: 8px 0; white-space: pre;">["trades_2024.csv", "trades_2025.csv"]</code>
                 </p>
                 <input type="url" id="folderUrl" placeholder="http://localhost:8080">
                 <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; cursor: pointer;">
@@ -2091,25 +2083,7 @@
 
                 hideFolderModal();
             } catch (error) {
-                // Check if it's a CORS or network error
-                const isCORSError = error.message.includes('Failed to fetch') ||
-                                   error.message.includes('NetworkError') ||
-                                   error.message.includes('CORS');
-
-                if (isCORSError) {
-                    alert('Error connecting to folder: Failed to fetch\n\n' +
-                          '⚠️  CORS Issue Detected!\n\n' +
-                          'Solution:\n' +
-                          '1. Stop the current server (Ctrl+C)\n' +
-                          '2. Use the CORS-enabled server:\n' +
-                          '   cd Performance_Data\n' +
-                          '   ./start_server.sh\n\n' +
-                          'Or manually:\n' +
-                          '   python3 cors_server.py\n\n' +
-                          'Then try connecting again.');
-                } else {
-                    alert('Error connecting to folder: ' + error.message);
-                }
+                alert('Error connecting to folder: ' + error.message);
             }
         }
 
