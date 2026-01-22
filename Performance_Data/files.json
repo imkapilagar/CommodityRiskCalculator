@@ -4,6 +4,8 @@
     "PnL_Nov25.xlsx",
     "PnL_Oct25.xlsx"
   ],
-  "final_files": [
-  ]
+  "final_files": {
+    "equity": ["EquityPnL.xlsx"],
+    "commodity": ["CommodityPnL.xlsx"]
+  }
 }

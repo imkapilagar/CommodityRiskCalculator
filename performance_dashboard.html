@@ -509,6 +509,45 @@
             font-weight: 600;
         }
 
+        /* View Toggle Buttons */
+        .view-toggle {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin: 20px 0;
+        }
+
+        .toggle-btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 20px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .toggle-btn:hover {
+            border-color: var(--accent-gold);
+            transform: translateY(-1px);
+        }
+
+        .toggle-btn.active {
+            background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-dark) 100%);
+            border-color: var(--accent-gold);
+            color: var(--bg-primary);
+            font-weight: 600;
+            box-shadow: var(--shadow-gold);
+        }
+
+        .toggle-btn svg {
+            margin-right: 6px;
+        }
+
         /* Stats Grid */
         .stats-grid {
             display: grid;
@@ -1589,6 +1628,23 @@
             </select>
         </div>
 
+        <!-- View Toggle: Strategy vs Final -->
+        <div class="view-toggle hidden" id="viewToggle" style="margin: 20px 0; display: flex; gap: 12px; align-items: center;">
+            <span style="color: var(--text-secondary); font-size: 0.9rem; font-weight: 500;">View:</span>
+            <button class="toggle-btn active" id="strategyViewBtn" onclick="switchView('strategy')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                Strategy Files
+            </button>
+            <button class="toggle-btn" id="finalViewBtn" onclick="switchView('final')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Final P&L
+            </button>
+        </div>
+
         <!-- Strategy Pills -->
         <div class="strategy-pills hidden" id="strategyPills">
             <span class="strategy-pill active" data-strategy="all">All Strategies</span>
@@ -1848,6 +1904,7 @@
         let filteredData = [];
         let currentDatePreset = 'all';
         let currentStrategy = 'all';
+        let currentView = 'strategy'; // 'strategy' or 'final'
 
         // Configuration
         const CONFIG = {
@@ -2082,20 +2139,30 @@
 
                 // Support both old array format and new object format
                 let strategyFiles = [];
-                let finalFiles = [];
+                let finalFilesEquity = [];
+                let finalFilesCommodity = [];
 
                 if (Array.isArray(filesData)) {
                     // Old format: ["file1.csv", "file2.csv"]
                     strategyFiles = filesData;
                 } else if (typeof filesData === 'object') {
-                    // New format: { strategy_files: [...], final_files: [...] }
+                    // New format: { strategy_files: [...], final_files: {...} }
                     strategyFiles = filesData.strategy_files || [];
-                    finalFiles = filesData.final_files || [];
+
+                    const finalFiles = filesData.final_files || [];
+                    if (Array.isArray(finalFiles)) {
+                        // Old final_files format: ["file1.xlsx", "file2.xlsx"]
+                        finalFilesEquity = finalFiles;
+                    } else if (typeof finalFiles === 'object') {
+                        // New final_files format: { equity: [...], commodity: [...] }
+                        finalFilesEquity = finalFiles.equity || [];
+                        finalFilesCommodity = finalFiles.commodity || [];
+                    }
                 } else {
                     throw new Error('files.json should be an array or object with strategy_files/final_files');
                 }
 
-                if (strategyFiles.length === 0 && finalFiles.length === 0) {
+                if (strategyFiles.length === 0 && finalFilesEquity.length === 0 && finalFilesCommodity.length === 0) {
                     throw new Error('No files specified in files.json');
                 }
 
@@ -2105,7 +2172,7 @@
                 localStorage.setItem('folderAutoRefresh', autoRefresh);
 
                 // Load all files from the folder
-                await loadFilesFromFolder(url, strategyFiles, finalFiles);
+                await loadFilesFromFolder(url, strategyFiles, finalFilesEquity, finalFilesCommodity);
 
                 hideFolderModal();
             } catch (error) {
@@ -2131,7 +2198,7 @@
             }
         }
 
-        async function loadFilesFromFolder(baseUrl, strategyFiles, finalFiles = []) {
+        async function loadFilesFromFolder(baseUrl, strategyFiles, finalFilesEquity = [], finalFilesCommodity = []) {
             let loadedCount = 0;
             let totalTrades = 0;
 
@@ -2183,8 +2250,8 @@
                 }
             }
 
-            // Load final P&L files
-            for (const fileName of finalFiles) {
+            // Helper function to load file
+            async function loadFile(fileName, assetType) {
                 try {
                     const fileUrl = `${baseUrl}/${fileName}`;
                     const isExcel = fileName.match(/\.(xlsx|xls)$/i);
@@ -2192,7 +2259,7 @@
 
                     if (!response.ok) {
                         console.warn(`Could not load ${fileName}`);
-                        continue;
+                        return null;
                     }
 
                     let fileData;
@@ -2213,21 +2280,53 @@
                     const trades = parseFileData(fileData);
 
                     if (trades.length > 0) {
-                        const sourceKey = `Final: ${fileName}`;
-                        loadedFiles[sourceKey] = {
-                            name: fileName,
-                            trades: trades,
-                            source: 'folder',
-                            fileType: 'final',
-                            url: fileUrl,
-                            folderUrl: baseUrl,
-                            loadedAt: new Date().toISOString()
+                        return {
+                            fileUrl,
+                            trades,
+                            assetType
                         };
-                        loadedCount++;
-                        totalTrades += trades.length;
                     }
                 } catch (error) {
                     console.warn(`Error loading ${fileName}:`, error);
+                }
+                return null;
+            }
+
+            // Load final Equity P&L files
+            for (const fileName of finalFilesEquity) {
+                const result = await loadFile(fileName, 'equity');
+                if (result) {
+                    const sourceKey = `Final Equity: ${fileName}`;
+                    loadedFiles[sourceKey] = {
+                        name: fileName,
+                        trades: result.trades,
+                        source: 'folder',
+                        fileType: 'final_equity',
+                        url: result.fileUrl,
+                        folderUrl: baseUrl,
+                        loadedAt: new Date().toISOString()
+                    };
+                    loadedCount++;
+                    totalTrades += result.trades.length;
+                }
+            }
+
+            // Load final Commodity P&L files
+            for (const fileName of finalFilesCommodity) {
+                const result = await loadFile(fileName, 'commodity');
+                if (result) {
+                    const sourceKey = `Final Commodity: ${fileName}`;
+                    loadedFiles[sourceKey] = {
+                        name: fileName,
+                        trades: result.trades,
+                        source: 'folder',
+                        fileType: 'final_commodity',
+                        url: result.fileUrl,
+                        folderUrl: baseUrl,
+                        loadedAt: new Date().toISOString()
+                    };
+                    loadedCount++;
+                    totalTrades += result.trades.length;
                 }
             }
 
@@ -2516,11 +2615,20 @@
         function rebuildData() {
             rawData = [];
             Object.values(loadedFiles).forEach(file => {
+                // Filter files based on current view
+                const isStrategyFile = file.fileType === 'strategy';
+                const isFinalFile = file.fileType === 'final_equity' || file.fileType === 'final_commodity';
+
+                // Skip files that don't match current view
+                if (currentView === 'strategy' && !isStrategyFile) return;
+                if (currentView === 'final' && !isFinalFile) return;
+
                 file.trades.forEach(trade => {
                     rawData.push({
                         ...trade,
                         date: trade.date ? new Date(trade.date) : null,
-                        exitDate: trade.exitDate ? new Date(trade.exitDate) : null
+                        exitDate: trade.exitDate ? new Date(trade.exitDate) : null,
+                        fileType: file.fileType
                     });
                 });
             });
@@ -2639,11 +2747,17 @@
         function updateUI() {
             const hasData = Object.keys(loadedFiles).length > 0;
 
+            // Check if we have strategy files and final files
+            const hasStrategyFiles = Object.values(loadedFiles).some(f => f.fileType === 'strategy');
+            const hasFinalFiles = Object.values(loadedFiles).some(f => f.fileType === 'final_equity' || f.fileType === 'final_commodity');
+            const showViewToggle = hasStrategyFiles && hasFinalFiles;
+
             document.getElementById('uploadSection').classList.toggle('has-files', hasData);
             document.getElementById('uploadContent').classList.toggle('hidden', hasData);
             document.getElementById('filesContainer').classList.toggle('hidden', !hasData);
             document.getElementById('datePresets').classList.toggle('hidden', !hasData);
-            document.getElementById('strategyPills').classList.toggle('hidden', !hasData);
+            document.getElementById('viewToggle').classList.toggle('hidden', !showViewToggle);
+            document.getElementById('strategyPills').classList.toggle('hidden', !hasData || currentView === 'final');
             document.getElementById('filtersRow').classList.toggle('hidden', !hasData);
             document.getElementById('statsGrid').classList.toggle('hidden', !hasData);
             document.getElementById('performanceSummary').classList.toggle('hidden', !hasData);
@@ -2659,8 +2773,18 @@
 
             container.innerHTML = files.map(file => {
                 const fileType = file.fileType || 'strategy';
-                const chipClass = fileType === 'final' ? 'file-equity' : 'file-strategy';
-                const typeLabel = fileType === 'final' ? 'FINAL' : 'STRATEGY';
+                let chipClass, typeLabel;
+
+                if (fileType === 'final_commodity') {
+                    chipClass = 'file-commodity';
+                    typeLabel = 'COMMODITY';
+                } else if (fileType === 'final_equity') {
+                    chipClass = 'file-equity';
+                    typeLabel = 'EQUITY';
+                } else {
+                    chipClass = 'file-strategy';
+                    typeLabel = 'STRATEGY';
+                }
 
                 return `
                 <div class="file-chip ${chipClass}">
@@ -2682,6 +2806,29 @@
 
         function hasData() {
             return Object.keys(loadedFiles).length > 0;
+        }
+
+        function switchView(view) {
+            currentView = view;
+
+            // Update button states
+            document.getElementById('strategyViewBtn').classList.toggle('active', view === 'strategy');
+            document.getElementById('finalViewBtn').classList.toggle('active', view === 'final');
+
+            // Show/hide strategy pills based on view
+            const strategyPills = document.getElementById('strategyPills');
+            if (view === 'final') {
+                // Hide strategy filter in final view
+                strategyPills.classList.add('hidden');
+                currentStrategy = 'all'; // Reset strategy filter
+            } else {
+                // Show strategy filter in strategy view
+                strategyPills.classList.remove('hidden');
+            }
+
+            // Rebuild data with new view filter
+            rebuildData();
+            updateUI();
         }
 
         function removeFile(fileName) {

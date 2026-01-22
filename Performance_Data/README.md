@@ -43,7 +43,7 @@ Performance_Data/
 Create a `files.json` file listing all your trading data files.
 
 ### New Format (Recommended):
-Segregate strategy files and final P&L files:
+Segregate strategy files and final P&L files (Equity/Commodity):
 
 ```json
 {
@@ -52,17 +52,20 @@ Segregate strategy files and final P&L files:
     "PnL_Nov25.xlsx",
     "PnL_Oct25.xlsx"
   ],
-  "final_files": [
-    "Final_PnL_Dec25.xlsx"
-  ]
+  "final_files": {
+    "equity": ["EquityPnL.xlsx"],
+    "commodity": ["CommodityPnL.xlsx"]
+  }
 }
 ```
 
 **File Types:**
 - **strategy_files** - Individual strategy P&L (before costs)
   - Shows with 🟡 STRATEGY badge (gold)
-- **final_files** - Consolidated P&L after all costs
-  - Shows with 🟢 FINAL badge (green)
+- **final_files.equity** - Final Equity P&L after all costs
+  - Shows with 🔵 EQUITY badge (blue/green)
+- **final_files.commodity** - Final Commodity P&L after all costs
+  - Shows with 🟢 COMMODITY badge (green)
 
 ### Old Format (Still Supported):
 Simple array of files (all treated as strategy files):
@@ -104,9 +107,15 @@ Simple array of files (all treated as strategy files):
 ### Visual Indicators:
 The dashboard shows different badges:
 - 🟡 **STRATEGY** badge (Gold border) - Strategy files
-- 🟢 **FINAL** badge (Green border) - Final P&L files
+- 🔵 **EQUITY** badge (Blue-green border) - Final Equity P&L
+- 🟢 **COMMODITY** badge (Green border) - Final Commodity P&L
 
-This helps you quickly identify which data you're analyzing.
+### View Toggle:
+The dashboard automatically shows a **View Toggle** when you have both strategy and final files:
+- **Strategy Files** - Shows strategy-wise P&L with filtering options
+- **Final P&L** - Shows consolidated P&L (strategy filtering disabled)
+
+This helps you quickly identify which data you're analyzing and switch between views.
 
 ---
 
