@@ -2350,10 +2350,34 @@
                     const response = await fetch(filesListUrl);
 
                     if (response.ok) {
-                        const filesList = await response.json();
-                        if (Array.isArray(filesList) && filesList.length > 0) {
+                        const filesData = await response.json();
+
+                        // Support both old array format and new object format
+                        let strategyFiles = [];
+                        let finalFilesEquity = [];
+                        let finalFilesCommodity = [];
+
+                        if (Array.isArray(filesData)) {
+                            // Old format: ["file1.csv", "file2.csv"]
+                            strategyFiles = filesData;
+                        } else if (typeof filesData === 'object') {
+                            // New format: { strategy_files: [...], final_files: {...} }
+                            strategyFiles = filesData.strategy_files || [];
+
+                            const finalFiles = filesData.final_files || [];
+                            if (Array.isArray(finalFiles)) {
+                                // Old final_files format: ["file1.xlsx", "file2.xlsx"]
+                                finalFilesEquity = finalFiles;
+                            } else if (typeof finalFiles === 'object') {
+                                // New final_files format: { equity: [...], commodity: [...] }
+                                finalFilesEquity = finalFiles.equity || [];
+                                finalFilesCommodity = finalFiles.commodity || [];
+                            }
+                        }
+
+                        if (strategyFiles.length > 0 || finalFilesEquity.length > 0 || finalFilesCommodity.length > 0) {
                             folderUrl = url;
-                            await loadFilesFromFolder(url, filesList);
+                            await loadFilesFromFolder(url, strategyFiles, finalFilesEquity, finalFilesCommodity);
                         }
                     }
                 } catch (error) {
